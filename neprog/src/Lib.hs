@@ -1,54 +1,56 @@
 module Lib
     ( Tarif (..),
         parseTarif
-    ) where
+    ) where     
+
+import Text.Read (readMaybe)  
 
 data Tarif = Tarif {
     brandName :: String,
-    tarifPrice :: Int,
-    minutesNumber :: Int,
-    gigabyteNumber :: Int,
-    smsNumber :: Int,
-    balanceTransfer :: Bool,
-    familyTarif :: Bool,
-    isUnlimitedSocials :: Bool
+    tarifPrice :: Maybe Int,
+    minutesNumber :: Maybe Int,
+    gigabyteNumber :: Maybe Int,
+    smsNumber :: Maybe Int,
+    balanceTransfer :: Maybe Bool,
+    familyTarif :: Maybe Bool,
+    isUnlimitedSocials :: Maybe Bool
 } deriving (Show, Read)
 
 data Price = From Double | To Double | FromTo (Double, Double) | Double deriving (Show, Read) -- FROMTO КОРТЕЖ
 
 data Query = Query {
     query_brandName :: (String, String),
-    query_tarifPrice :: (String, Price),
-    query_minutesNumber :: (String, Either String Int), -- maybe 
-    query_gigabyteNumber :: (String, Either String Int),
-    query_smsNumber :: (String, Either String Int),
-    query_balanceTransfer :: (String, Either String Bool),
-    query_familyTarif :: (String, Either String Bool),
-    query_isUnlimitedSocials :: (String, Either String Bool)
+    query_tarifPrice :: (String, Maybe Int),
+    query_minutesNumber :: (String, Maybe Int), -- maybe 
+    query_gigabyteNumber :: (String, Maybe Int),
+    query_smsNumber :: (String, Maybe Int),
+    query_balanceTransfer :: (String, Maybe Bool),
+    query_familyTarif :: (String, Maybe Bool),
+    query_isUnlimitedSocials :: (String, Maybe Bool)
 } deriving (Show, Read)
 
 
 parseTarif :: String -> Tarif
 parseTarif str =
   let [brand, price, minutes, internet, sms, transfer, family, socials] = words str
-  in Tarif { brandName = brand, tarifPrice = read price , minutesNumber = read minutes, gigabyteNumber = read internet, smsNumber = read sms, 
-            balanceTransfer = read transfer, familyTarif = read family, isUnlimitedSocials = read socials}
+  in Tarif { brandName = brand, tarifPrice = readMaybe price , minutesNumber = readMaybe minutes, gigabyteNumber = readMaybe internet, smsNumber = readMaybe sms, 
+            balanceTransfer = readMaybe transfer, familyTarif = readMaybe family, isUnlimitedSocials = readMaybe socials}
 -- приведение строки к data Tarif
 
-{-readFrom::FilePath -> [Tarif]
--- считывание из одного
 
-readAndValidateData :: [FilePath] -> Either String [Tarif]
--- считываем информацию из бд let filepaths = ["company1.txt", "company2.txt", "company3.txt"]\
+parseUserQuery :: String -> Query
+parseUserQuery str =
+  let [brand, price, minutes, internet, sms, transfer, family, socials] = words str
+  in Query { query_brandName = ("brand", brand), query_tarifPrice = ("price", readMaybe price), query_minutesNumber = ("minutesNuber", readMaybe minutes), query_gigabyteNumber = ("Gigabytes", readMaybe internet), query_smsNumber = ("SMS", readMaybe sms), 
+            query_balanceTransfer = ("transfer", readMaybe transfer), query_familyTarif = ("family", readMaybe family), query_isUnlimitedSocials = ("socials", readMaybe socials)}
+-- получаем информацию из запроса
 
+{-
 printQueryInstructions :: IO ()
 -- инструкция к запросу
 
 validateQuery :: String -> Either String Bool
 -- проверка формата запроса
-
-parseUserQuery :: String -> Query
--- получаем информацию из запроса
 
 searchProducts :: Query -> [Tarif] -> [Tarif]
 -- поиск по БД
