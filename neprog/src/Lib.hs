@@ -1,8 +1,8 @@
 module Lib
-    ( Tarif (..),
-        parseTarif,
-        parseUserQuery,
-        compareQueries
+    ( Tarif (..)
+        , parseTarif
+        , parseUserQuery
+        , searchProducts
     ) where     
 
 import Text.Read (readMaybe) 
@@ -11,34 +11,35 @@ import Data.List (any)
 import Data.Maybe (isNothing)
 
 data Tarif = Tarif {
-    brandName :: String,
-    tarifPrice :: Maybe Int,
-    minutesNumber :: Maybe Int,
-    gigabyteNumber :: Maybe Int,
-    smsNumber :: Maybe Int,
-    balanceTransfer :: Maybe Bool,
-    familyTarif :: Maybe Bool,
-    isUnlimitedSocials :: Maybe Bool
+    brandName :: String
+    , tarifPrice :: Maybe Intervals
+    , minutesNumber :: Maybe Intervals
+    , gigabyteNumber :: Maybe Intervals
+    , smsNumber :: Maybe Intervals
+    , balanceTransfer :: Maybe Bool
+    , familyTarif :: Maybe Bool
+    , isUnlimitedSocials :: Maybe Bool
 } deriving (Show, Read)
 
-data Price = From Double | To Double | FromTo (Double, Double) | Double deriving (Show, Read) -- FROMTO КОРТЕЖ
+data Intervals = From Double | To Double | FromTo (Double, Double) | Single Double
+     deriving (Show, Read, Eq)
 
 data Query = Query {
-    query_brandName :: (String, String),
-    query_tarifPrice :: (String, Maybe Int),
-    query_minutesNumber :: (String, Maybe Int), -- maybe 
-    query_gigabyteNumber :: (String, Maybe Int),
-    query_smsNumber :: (String, Maybe Int),
-    query_balanceTransfer :: (String, Maybe Bool),
-    query_familyTarif :: (String, Maybe Bool),
-    query_isUnlimitedSocials :: (String, Maybe Bool)
+    queryBrandName :: (String, String)
+    , queryTarifPrice :: (String, Maybe Intervals)
+    , queryMinutesNumber :: (String, Maybe Intervals) 
+    , queryGigabyteNumber :: (String, Maybe Intervals)
+    , querySmsNumber :: (String, Maybe Intervals)
+    , queryBalanceTransfer :: (String, Maybe Bool)
+    , queryFamilyTarif :: (String, Maybe Bool)
+    , queryIsUnlimitedSocials :: (String, Maybe Bool)
 } deriving (Show, Read)
 
 
 parseTarif :: String -> Tarif
 parseTarif str =
-  let [brand, price, minutes, internet, sms, transfer, family, socials] = words str
-  in Tarif { brandName = brand, tarifPrice = readMaybe price , minutesNumber = readMaybe minutes, gigabyteNumber = readMaybe internet, smsNumber = readMaybe sms, 
+  let [brand, price, minutes, internet, sms, transfer, family, socials] = splitOn ", " str
+  in Tarif { brandName = brand, tarifPrice = parseIntervals price , minutesNumber = parseIntervals minutes, gigabyteNumber = parseIntervals internet, smsNumber = parseIntervals sms, 
             balanceTransfer = readMaybe transfer, familyTarif = readMaybe family, isUnlimitedSocials = readMaybe socials}
 -- приведение строки к data Tarif
 
@@ -46,24 +47,39 @@ parseTarif str =
 parseUserQuery :: String -> Query
 parseUserQuery str =
   let [brand, price, minutes, internet, sms, transfer, family, socials] = splitOn "/" str
-  in Query { query_brandName = ("brand", brand), query_tarifPrice = ("price", readMaybe price), query_minutesNumber = ("minutesNuber", readMaybe minutes), query_gigabyteNumber = ("Gigabytes", readMaybe internet), query_smsNumber = ("SMS", readMaybe sms), 
-            query_balanceTransfer = ("transfer", readMaybe transfer), query_familyTarif = ("family", readMaybe family), query_isUnlimitedSocials = ("socials", readMaybe socials)}
+  in Query { queryBrandName = ("brand", brand), queryTarifPrice = ("price", parseIntervals price), queryMinutesNumber = ("minutesNuber", parseIntervals minutes), queryGigabyteNumber = ("Gigabytes", parseIntervals internet), querySmsNumber = ("SMS", parseIntervals sms), 
+            queryBalanceTransfer = ("transfer", readMaybe transfer), queryFamilyTarif = ("family", readMaybe family), queryIsUnlimitedSocials = ("socials", readMaybe socials)}
 -- получаем информацию из запроса
 
-compareField :: Eq a => Maybe a -> Maybe a -> Bool
-compareField (Just x) (Just y) = x == y
-compareField _ _ = True
+compareBoolField :: Eq a => Maybe a -> Maybe a -> Bool
+compareBoolField (Just x) (Just y) = x == y
+compareBoolField (Just _) _ = True
+
+compareIntervalsField :: Maybe Intervals -> Maybe Intervals -> Bool
+compareIntervalsField (Just (Single x)) (Just (Single y)) = x == y
+compareIntervalsField (Just (Single x)) (Just (From y)) = x >= y
+compareIntervalsField (Just (Single x)) (Just (To y)) = x <= y
+compareIntervalsField (Just (Single x)) (Just (FromTo (y1, y2))) = x <= y2 && x >= y1
+compareIntervalsField (Just (Single _)) _ = True
 
 searchProducts :: Query -> Tarif -> [Tarif]
 searchProducts query tarif =
-  if all id [compareField (tarifPrice tarif) (snd $ query_tarifPrice query)
-          , compareField (minutesNumber tarif) (snd $ query_minutesNumber query)
-          , compareField (gigabyteNumber tarif) (snd $ query_gigabyteNumber query)
-          , compareField (smsNumber tarif) (snd $ query_smsNumber query)
-          , compareField (balanceTransfer tarif) (snd $ query_balanceTransfer query)
-          , compareField (familyTarif tarif) (snd $ query_familyTarif query)
-          , compareField (isUnlimitedSocials tarif) (snd $ query_isUnlimitedSocials query)] == True then [tarif]
+  if all id [compareIntervalsField (tarifPrice tarif) (snd $ queryTarifPrice query)
+          , compareIntervalsField (minutesNumber tarif) (snd $ queryMinutesNumber query)
+          , compareIntervalsField (gigabyteNumber tarif) (snd $ queryGigabyteNumber query)
+          , compareIntervalsField (smsNumber tarif) (snd $ querySmsNumber query)
+          , compareBoolField (balanceTransfer tarif) (snd $ queryBalanceTransfer query)
+          , compareBoolField (familyTarif tarif) (snd $ queryFamilyTarif query)
+          , compareBoolField (isUnlimitedSocials tarif) (snd $ queryIsUnlimitedSocials query)] == True then [tarif]
           else []
+
+parseIntervals :: String -> Maybe Intervals
+parseIntervals str = case words str of
+  ["From", x] -> From <$> readMaybe x
+  ["To", x] -> To <$> readMaybe x
+  ["FromTo", x, y] -> FromTo <$> ((,) <$> readMaybe x <*> readMaybe y)
+  [x] -> Single <$> readMaybe x
+  _ -> Nothing
 
 {-
 printQueryInstructions :: IO ()

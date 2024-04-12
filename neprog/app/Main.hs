@@ -3,16 +3,10 @@
 
 module Main (main) where
 
-import Lib (Tarif(..), parseTarif, parseUserQuery, compareQueries)
+import Lib (Tarif(..), parseTarif, parseUserQuery, searchProducts)
 
 import System.IO ()
 import Data.List.Split (splitOn)  
-
-{-parseFilePaths :: String -> [FilePath]
--- полученную строку с названиями файлов разбиваем
-
-getUserQuery :: IO String
--- получаем запрос-}
 
 readAndConcatFileLines :: FilePath -> IO [Tarif]
 readAndConcatFileLines path = do

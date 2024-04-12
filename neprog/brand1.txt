@@ -1,1 +1,1 @@
-Econom 300 100 2 200 True False False
+Econom, 300, 100, 2, 200, True, False, False

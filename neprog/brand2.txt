@@ -1,1 +1,1 @@
-Premium 1000 1000 10 2000 True True True
+Premium, 1000, 1000, 10, 2000, True, True, True
