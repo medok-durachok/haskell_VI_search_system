@@ -1,9 +1,14 @@
 module Lib
     ( Tarif (..),
-        parseTarif
+        parseTarif,
+        parseUserQuery,
+        compareQueries
     ) where     
 
-import Text.Read (readMaybe)  
+import Text.Read (readMaybe) 
+import Data.List.Split (splitOn) 
+import Data.List (any)
+import Data.Maybe (isNothing)
 
 data Tarif = Tarif {
     brandName :: String,
@@ -40,20 +45,29 @@ parseTarif str =
 
 parseUserQuery :: String -> Query
 parseUserQuery str =
-  let [brand, price, minutes, internet, sms, transfer, family, socials] = words str
+  let [brand, price, minutes, internet, sms, transfer, family, socials] = splitOn "/" str
   in Query { query_brandName = ("brand", brand), query_tarifPrice = ("price", readMaybe price), query_minutesNumber = ("minutesNuber", readMaybe minutes), query_gigabyteNumber = ("Gigabytes", readMaybe internet), query_smsNumber = ("SMS", readMaybe sms), 
             query_balanceTransfer = ("transfer", readMaybe transfer), query_familyTarif = ("family", readMaybe family), query_isUnlimitedSocials = ("socials", readMaybe socials)}
 -- получаем информацию из запроса
 
+compareField :: Eq a => Maybe a -> Maybe a -> Bool
+compareField (Just x) (Just y) = x == y
+compareField _ _ = True
+
+searchProducts :: Query -> Tarif -> [Tarif]
+searchProducts query tarif =
+  if all id [compareField (tarifPrice tarif) (snd $ query_tarifPrice query)
+          , compareField (minutesNumber tarif) (snd $ query_minutesNumber query)
+          , compareField (gigabyteNumber tarif) (snd $ query_gigabyteNumber query)
+          , compareField (smsNumber tarif) (snd $ query_smsNumber query)
+          , compareField (balanceTransfer tarif) (snd $ query_balanceTransfer query)
+          , compareField (familyTarif tarif) (snd $ query_familyTarif query)
+          , compareField (isUnlimitedSocials tarif) (snd $ query_isUnlimitedSocials query)] == True then [tarif]
+          else []
+
 {-
 printQueryInstructions :: IO ()
 -- инструкция к запросу
-
-validateQuery :: String -> Either String Bool
--- проверка формата запроса
-
-searchProducts :: Query -> [Tarif] -> [Tarif]
--- поиск по БД
 
 calculatePriceWithBonus :: Double -> Tarif -> Double
 -- цена с учетом баллов
