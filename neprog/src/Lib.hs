@@ -3,6 +3,7 @@ module Lib
         , parseTarif
         , parseUserQuery
         , searchProducts
+        , showTarif
     ) where     
 
 import Text.Read (readMaybe) 
@@ -19,7 +20,41 @@ data Tarif = Tarif {
     , balanceTransfer :: Maybe Bool
     , familyTarif :: Maybe Bool
     , isUnlimitedSocials :: Maybe Bool
-} deriving (Show, Read)
+} deriving (Read)
+
+instance Show Tarif where
+  show (Tarif brand price minutes internet sms transfer family socials) =
+    "brand: " ++ show brand ++
+    ", price: " ++ showInterval price ++
+    ", minutes: " ++ showInterval minutes ++
+    ", gigabyte: " ++ showInterval internet ++
+    ", sms: " ++ showInterval sms ++
+    ", transfer: " ++ showMaybe transfer ++
+    ", family: " ++ showMaybe family ++
+    ", unlimitedSocials: " ++ showMaybe socials ++ "\n"
+    where
+      showInterval (Just (Single x)) = show x
+      showMaybe (Just True) = "yes"
+      showMaybe (Just False) = "no"
+
+
+showTarifWithBonus :: Tarif -> Double -> String
+showTarifWithBonus tarif bonus = 
+  "brand:" ++ brandName tarif ++
+  ", price:" ++ showPrice (tarifPrice tarif) bonus ++
+  ", minutes:" ++ showInterval (minutesNumber tarif) ++
+  ", gigabyte:" ++ showInterval (gigabyteNumber tarif) ++
+  ", sms:" ++ show (smsNumber tarif) ++
+  ", transfer:" ++ show (balanceTransfer tarif) ++
+  ", family:" ++ show (familyTarif tarif) ++
+  ", unlimitedSocials:" ++ show (isUnlimitedSocials tarif) ++
+  " }"
+  where
+    showPrice (Just (Single x)) bonus = show bonus
+    showInterval (Just (Single x)) = show x
+    showMaybe (Just True) = "yes"
+    showMaybe (Just False) = "no"
+
 
 data Intervals = From Double | To Double | FromTo (Double, Double) | Single Double
      deriving (Show, Read, Eq)
@@ -53,14 +88,14 @@ parseUserQuery str =
 
 compareBoolField :: Eq a => Maybe a -> Maybe a -> Bool
 compareBoolField (Just x) (Just y) = x == y
-compareBoolField (Just _) _ = True
+compareBoolField _ _ = True
 
 compareIntervalsField :: Maybe Intervals -> Maybe Intervals -> Bool
 compareIntervalsField (Just (Single x)) (Just (Single y)) = x == y
 compareIntervalsField (Just (Single x)) (Just (From y)) = x >= y
 compareIntervalsField (Just (Single x)) (Just (To y)) = x <= y
 compareIntervalsField (Just (Single x)) (Just (FromTo (y1, y2))) = x <= y2 && x >= y1
-compareIntervalsField (Just (Single _)) _ = True
+compareIntervalsField _ _ = True
 
 searchProducts :: Query -> Tarif -> [Tarif]
 searchProducts query tarif =
@@ -81,15 +116,16 @@ parseIntervals str = case words str of
   [x] -> Single <$> readMaybe x
   _ -> Nothing
 
+
+showTarif :: [Tarif] -> Double -> Int -> [String]
+showTarif tarif _ 0 = [show tarif]
+showTarif tarif bonus 1 = map (\t -> showTarifWithBonus t bonus) tarif
+--calculatePriceWithBonus :: Double -> Double -> Double
+-- цена с учетом баллов
+
 {-
 printQueryInstructions :: IO ()
 -- инструкция к запросу
-
-calculatePriceWithBonus :: Double -> Tarif -> Double
--- цена с учетом баллов
-
-printMatchingProducts :: [Tarif] -> Tarif -> IO ()
--- выводим подходящие на экран
 
 askForPriceByIndex :: [Tarif] -> Int -> IO ()
 -- вывести цену интересующего товара
