@@ -15,34 +15,46 @@ readAndConcatFileLines path = do
   let linesOfFile = lines contents
   return (catMaybes (map parseTarif linesOfFile))
 
---loadBonusPoints :: FilePath -> Int
---loadBonusPoints path = do 
+repeatIndices :: [Tarif] -> Double -> IO()
+repeatIndices searchResult bonus = do
+  putStrLn "Show the price of tarif at index: "
+  num <- getLine
+  let index = read num
+  putStrLn ""
+  
+  putStrLn "Do you want to use bonuses? (yes/no)"
+  bonus_ans <- getLine
+  let bonusApplied = if bonus_ans == "yes" then bonus else 0.0
+  putStrLn $ show $ getPriceByIndex searchResult index bonusApplied
+  putStrLn "Continue with prices? (yes/no)"
+  continue <- getLine
+  if continue == "yes"
+    then repeatIndices searchResult bonus
+    else putStrLn ""
 
+repeatQueries :: [[Tarif]] -> Double -> IO ()
+repeatQueries fileContents bonus = do
+  putStrLn "Enter the query:"
+  query <- getLine
+  let searchResult = concatMap (searchProducts (parseUserQuery query)) (concat fileContents)
+  putStrLn ""
+  putStrLn $ showTarif searchResult bonus 0
+  
+  repeatIndices searchResult bonus
+  
+  putStrLn "Do you want to enter another query? (yes/no)"
+  continue <- getLine
+  if continue == "yes"
+    then repeatQueries fileContents bonus
+    else putStrLn ""
 
 main :: IO ()
 main = do 
-  --contents <- readFile "C:/uni2023-24/haskell_VI_Potapova/neprog/brand1.txt"
-  --putStrLn contents
-  putStrLn "Введите пути файлов, разделенные запятыми и пробелами:"
+  putStrLn "Enter the file paths separated by commas and spaces:"
   input <- getLine
   bonus <- readFile ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/" "bonus.txt")
   let paths = splitOn ", " input
   putStrLn "" 
   fileContents <- mapM readAndConcatFileLines (map ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/") paths)
-  -- print (concat fileContents)
-  putStrLn "Введите запрос:"
-  query <- getLine
   putStrLn ""
-  -- putStrLn $ show (parseUserQuery query)
-  
-  putStrLn $ showTarif (concat (map (searchProducts (parseUserQuery query)) (concat fileContents))) 0 0
-  --print (if bonus_ans == 0 then concat (map (searchProducts (parseUserQuery query)) (concat fileContents)))
-  putStrLn "интересующий номер"
-  num <- getLine
-  putStrLn "Учесть бонусы?"
-  bonus_ans <- getLine
-  putStrLn $ show $ (getPriceByIndex (concat (map (searchProducts (parseUserQuery query)) (concat fileContents))) (read num)   (read bonus) (read bonus_ans))
--- предлагаем пользователю инструкцию к запросу
--- предлагаем пользователю посмотреть цену через порядковый номер
--- загружаем файл с бонусными баллами, выводим цену с учетом бонусных баллов или без него
--- предлагаем пользователю продолжить поиск или закончить
+  repeatQueries fileContents (read bonus)

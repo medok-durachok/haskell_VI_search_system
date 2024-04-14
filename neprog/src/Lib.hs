@@ -146,7 +146,6 @@ priceOnly (Just _) _ = 0
 priceOnly Nothing _ = 0
 
 
-getPriceByIndex :: [Tarif] -> Int -> Double -> Int -> Double
-getPriceByIndex lst n _ 0 = priceOnly (tarifPrice (last (take n lst))) 0
-getPriceByIndex lst n bonus 1 = priceOnly (tarifPrice (last (take n lst))) bonus
-getPriceByIndex _ _ _ _ = 0
+getPriceByIndex :: [Tarif] -> Int -> Double -> Double
+getPriceByIndex lst n bonus = priceOnly (tarifPrice (last (take n lst))) bonus
+getPriceByIndex _ _ _= 0
