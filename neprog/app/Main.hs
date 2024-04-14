@@ -54,7 +54,5 @@ main = do
   input <- getLine
   bonus <- readFile ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/" "bonus.txt")
   let paths = splitOn ", " input
-  putStrLn "" 
   fileContents <- mapM readAndConcatFileLines (map ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/") paths)
-  putStrLn ""
   repeatQueries fileContents (read bonus)
