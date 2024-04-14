@@ -8,12 +8,29 @@ import Lib (Tarif(..), parseTarif, parseUserQuery, searchProducts, showTarif, ge
 import System.IO ()
 import Data.List.Split (splitOn)  
 import Data.Maybe (catMaybes)
+import System.Directory (doesFileExist)
+import Control.Monad (when)
 
-readAndConcatFileLines :: FilePath -> IO [Tarif]
+
+readFilesIfExists :: [FilePath] -> IO (Either String [String])
+readFilesIfExists filePaths = do
+  let checkFile filePath = do
+        fileExists <- doesFileExist filePath
+        if fileExists
+          then Right <$> readFile filePath
+          else return $ Left $ "Файл '" ++ filePath ++ "' не существует!"
+  results <- mapM checkFile filePaths
+  return $ sequence results
+
+readAndConcatFileLines :: FilePath -> IO (Either String [Tarif])
 readAndConcatFileLines path = do
-  contents <- readFile path
-  let linesOfFile = lines contents
-  return (catMaybes (map parseTarif linesOfFile))
+  fileExists <- doesFileExist path
+  if fileExists
+    then do
+      contents <- readFile path
+      let linesOfFile = lines contents
+      return $ Right $ catMaybes (map parseTarif linesOfFile)
+    else return $ Left $ "File '" ++ path ++ "' doesn't exist"
 
 showPrice :: [Tarif] -> Int -> Double -> IO()
 showPrice searchResult index bonus = do
@@ -60,4 +77,7 @@ main = do
   bonus <- readFile ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/" "bonus.txt")
   let paths = splitOn ", " input
   fileContents <- mapM readAndConcatFileLines (map ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/") paths)
-  repeatQueries fileContents (read bonus)
+  case sequence fileContents of
+    Right tarifs -> do
+      repeatQueries tarifs (read bonus)
+    Left errorMessage -> putStrLn $ "Access error: " ++ errorMessage
