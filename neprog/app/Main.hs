@@ -9,18 +9,13 @@ import System.IO ()
 import Data.List.Split (splitOn)  
 import Data.Maybe (catMaybes)
 import System.Directory (doesFileExist)
-import Control.Monad (when)
+import Data.Char (toLower)
 
-
-readFilesIfExists :: [FilePath] -> IO (Either String [String])
-readFilesIfExists filePaths = do
-  let checkFile filePath = do
-        fileExists <- doesFileExist filePath
-        if fileExists
-          then Right <$> readFile filePath
-          else return $ Left $ "Файл '" ++ filePath ++ "' не существует!"
-  results <- mapM checkFile filePaths
-  return $ sequence results
+checkResponse :: String -> Either String Bool
+checkResponse response
+  | map toLower response == "yes" = Right True
+  | map toLower response == "no" = Right False
+  | otherwise = Left "Invalid response. Please enter 'yes' or 'no'."
 
 readAndConcatFileLines :: FilePath -> IO (Either String [Tarif])
 readAndConcatFileLines path = do
@@ -36,13 +31,29 @@ showPrice :: [Tarif] -> Int -> Double -> IO()
 showPrice searchResult index bonus = do
   putStrLn "Do you want to use bonuses? (yes/no)"
   bonus_ans <- getLine
-  let bonusApplied = if bonus_ans == "yes" then bonus else 0.0
-  putStrLn $ show $ getPriceByIndex searchResult index bonusApplied
+  case (checkResponse bonus_ans) of
+    Right True -> do
+      let bonusApplied = bonus
+      putStrLn $ show $ getPriceByIndex searchResult index bonusApplied
+      continueWithPrices searchResult bonus
+    Right False -> do
+      let bonusApplied = 0.0
+      putStrLn $ show $ getPriceByIndex searchResult index bonusApplied
+      continueWithPrices searchResult bonus
+    Left err -> do
+      putStrLn err
+      showPrice searchResult index bonus
+
+continueWithPrices :: [Tarif] -> Double -> IO ()
+continueWithPrices searchResult bonus = do
   putStrLn "Continue with prices? (yes/no)"
   continue <- getLine
-  if continue == "yes"
-    then repeatIndices searchResult bonus
-    else putStr ""
+  case checkResponse continue of
+    Right True -> repeatIndices searchResult bonus
+    Right False -> return ()
+    Left err -> do
+      putStrLn err
+      continueWithPrices searchResult bonus
 
 repeatIndices :: [Tarif] -> Double -> IO()
 repeatIndices searchResult bonus = do
@@ -66,7 +77,7 @@ repeatQueries fileContents bonus = do
   
   putStrLn "Do you want to enter another query? (yes/no)"
   continue <- getLine
-  if continue == "yes"
+  if map toLower continue == "yes"
     then repeatQueries fileContents bonus
     else putStrLn ""
 
