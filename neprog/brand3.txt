@@ -1,10 +1,10 @@
-Standard, 500, 500, 200, 500, True, True, False
-Deluxe, 1800, 1200, 12, 2400, False, True, False
-Plus, 1000, 800, 8, 1600, True, False, True
-Value, 600, 400, 4, 800, False, True, True
-Gold, 2200, 1800, 18, 3600, True, True, False
-Platinum, 3000, 2500, 25, 5000, True, True, True
-Executive, 2800, 2000, 20, 4000, True, False, False
-Prime, 1500, 1000, 10, 2000, True, True, True
-Pro, 2000, 1500, 15, 3000, True, False, True
-Exclusive, 3500, 3000, 30, 6000, True, True, False
+C, Standard, 500, 500, 200, 500, True, True, False
+C, Deluxe, 1800, 1200, 12, 2400, False, True, False
+C, Plus, 1000, 800, 8, 1600, True, False, True
+C, Value, 600, 400, 4, 800, False, True, True
+C, Gold, 2200, 1800, 18, 3600, True, True, False
+C, Platinum, 3000, 2500, 25, 5000, True, True, True
+C, Executive, 2800, 2000, 20, 4000, True, False, False
+C, Prime, 1500, 1000, 10, 2000, True, True, True
+C, Pro, 2000, 1500, 15, 3000, True, False, True
+C, Exclusive, 3500, 3000, 30, 6000, True, True, False

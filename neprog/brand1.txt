@@ -1,10 +1,10 @@
-Econom, 300, 100, 2, 200, True, False, False
-Ultimate, 5000, 5000, 50, 10000, True, True, True
-Elite, 4000, 3500, 35, 7000, True, False, True
-Premium Lite, 900, 700, 7, 1400, False, False, False
-Advanced, 2600, 2200, 22, 4400, True, True, True
-Value Plus, 1200, 1000, 10, 2000, True, False, False
-Basic Plus, 700, 600, 6, 1200, False, True, True
-Enhanced, 1700, 1400, 14, 2800, True, False, True
-Silver, 2400, 2000, 20, 4000, True, False, True
-Ultra, 5000, 4000, 40, 8000, True, True, True
+A, Econom, 300, 100, 2, 200, True, False, False
+A, Ultimate, 5000, 5000, 50, 10000, True, True, True
+A, Elite, 4000, 3500, 35, 7000, True, False, True
+A, Premium Lite, 900, 700, 7, 1400, False, False, False
+A, Advanced, 2600, 2200, 22, 4400, True, True, True
+A, Value Plus, 1200, 1000, 10, 2000, True, False, False
+A, Basic Plus, 700, 600, 6, 1200, False, True, True
+A, Enhanced, 1700, 1400, 14, 2800, True, False, True
+A, Silver, 2400, 2000, 20, 4000, True, False, True
+A, Ultra, 5000, 4000, 40, 8000, True, True, True

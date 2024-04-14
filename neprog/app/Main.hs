@@ -36,6 +36,7 @@ repeatQueries :: [[Tarif]] -> Double -> IO ()
 repeatQueries fileContents bonus = do
   putStrLn "Enter the query:"
   query <- getLine
+  putStrLn $ show $ splitOn "/" query
   let searchResult = concatMap (searchProducts (parseUserQuery query)) (concat fileContents)
   putStrLn ""
   putStrLn $ showTarif searchResult bonus 0

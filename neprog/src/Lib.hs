@@ -12,6 +12,7 @@ import Data.List.Split (splitOn)
 
 data Tarif = Tarif {
     brandName :: String
+    , tarifName :: String
     , tarifPrice :: Maybe Intervals
     , minutesNumber :: Maybe Intervals
     , gigabyteNumber :: Maybe Intervals
@@ -22,8 +23,9 @@ data Tarif = Tarif {
 } deriving (Read)
 
 instance Show Tarif where
-  show (Tarif brand _ minutes internet sms transfer family socials) =
+  show (Tarif brand name _ minutes internet sms transfer family socials) =
     "brand: " ++ show brand ++
+    ", name: " ++ show name ++
     ", minutes: " ++ showInterval minutes ++
     ", gigabyte: " ++ showInterval internet ++
     ", sms: " ++ showInterval sms ++
@@ -61,7 +63,7 @@ data Intervals = From Double | To Double | FromTo (Double, Double) | Single Doub
      deriving (Show, Read, Eq)
 
 data Query = Query {
-    queryBrandName :: (String, String)
+    queryBrandName :: (String, Maybe String)
     , queryTarifPrice :: (String, Maybe Intervals)
     , queryMinutesNumber :: (String, Maybe Intervals) 
     , queryGigabyteNumber :: (String, Maybe Intervals)
@@ -74,17 +76,16 @@ data Query = Query {
 
 parseTarif :: String -> Maybe Tarif
 parseTarif str =
-  let [brand, price, minutes, internet, sms, transfer, family, socials] = splitOn ", " str
-  in Just Tarif { brandName = brand, tarifPrice = parseIntervals price , minutesNumber = parseIntervals minutes, gigabyteNumber = parseIntervals internet, smsNumber = parseIntervals sms, 
+  let [brand, name, price, minutes, internet, sms, transfer, family, socials] = splitOn ", " str
+  in Just Tarif { brandName = brand, tarifName = name, tarifPrice = parseIntervals price , minutesNumber = parseIntervals minutes, gigabyteNumber = parseIntervals internet, smsNumber = parseIntervals sms, 
             balanceTransfer = readMaybe transfer, familyTarif = readMaybe family, isUnlimitedSocials = readMaybe socials}
-parseTarif _ = Nothing
 -- приведение строки к data Tarif
 
 
 parseUserQuery :: String -> Query
 parseUserQuery str =
   let [brand, price, minutes, internet, sms, transfer, family, socials] = splitOn "/" str
-  in Query {queryBrandName = ("brand", brand), 
+  in Query {queryBrandName = ("brand", readMaybe brand), 
             queryTarifPrice = ("price", parseIntervals price), 
             queryMinutesNumber = ("minutesNuber", parseIntervals minutes), 
             queryGigabyteNumber = ("Gigabytes", parseIntervals internet), 
@@ -113,7 +114,8 @@ compareIntervalsField _ _ = True
 
 searchProducts :: Query -> Tarif -> [Tarif]
 searchProducts query tarif =
-  if all id [compareIntervalsField (tarifPrice tarif) (snd $ queryTarifPrice query)
+  if all id [compareBoolField (Just (brandName tarif)) (snd $ queryBrandName query)
+          , compareIntervalsField (tarifPrice tarif) (snd $ queryTarifPrice query)
           , compareIntervalsField (minutesNumber tarif) (snd $ queryMinutesNumber query)
           , compareIntervalsField (gigabyteNumber tarif) (snd $ queryGigabyteNumber query)
           , compareIntervalsField (smsNumber tarif) (snd $ querySmsNumber query)
@@ -148,4 +150,3 @@ priceOnly Nothing _ = 0
 
 getPriceByIndex :: [Tarif] -> Int -> Double -> Double
 getPriceByIndex lst n bonus = priceOnly (tarifPrice (last (take n lst))) bonus
-getPriceByIndex _ _ _= 0
