@@ -15,13 +15,8 @@ readAndConcatFileLines path = do
   let linesOfFile = lines contents
   return (catMaybes (map parseTarif linesOfFile))
 
-repeatIndices :: [Tarif] -> Double -> IO()
-repeatIndices searchResult bonus = do
-  putStrLn "Show the price of tarif at index: "
-  num <- getLine
-  let index = read num
-  putStrLn ""
-  
+showPrice :: [Tarif] -> Int -> Double -> IO()
+showPrice searchResult index bonus = do
   putStrLn "Do you want to use bonuses? (yes/no)"
   bonus_ans <- getLine
   let bonusApplied = if bonus_ans == "yes" then bonus else 0.0
@@ -30,7 +25,16 @@ repeatIndices searchResult bonus = do
   continue <- getLine
   if continue == "yes"
     then repeatIndices searchResult bonus
-    else putStrLn ""
+    else putStr ""
+
+repeatIndices :: [Tarif] -> Double -> IO()
+repeatIndices searchResult bonus = do
+  putStrLn "Show the price of tarif at index:.. If you don't need price, enter 0"
+  num <- getLine
+  let index = read num
+  putStrLn ""
+  if index == 0 then putStr ""
+  else showPrice searchResult index bonus
 
 repeatQueries :: [[Tarif]] -> Double -> IO ()
 repeatQueries fileContents bonus = do
@@ -39,7 +43,7 @@ repeatQueries fileContents bonus = do
   putStrLn $ show $ splitOn "/" query
   let searchResult = concatMap (searchProducts (parseUserQuery query)) (concat fileContents)
   putStrLn ""
-  putStrLn $ showTarif searchResult bonus 0
+  putStrLn $ showTarif searchResult
   
   repeatIndices searchResult bonus
   

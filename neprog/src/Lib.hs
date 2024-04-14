@@ -40,7 +40,7 @@ instance Show Tarif where
       showMaybe _ = ""
 
 
-showTarifWithBonus :: Tarif -> Double -> String
+{-showTarifWithBonus :: Tarif -> Double -> String
 showTarifWithBonus tarif _ = 
   "brand: " ++ brandName tarif ++
   {-", price: " ++ showPrice (tarifPrice tarif) bonus ++ -}
@@ -56,7 +56,7 @@ showTarifWithBonus tarif _ =
     showInterval _ = ""
     showMaybe (Just True) = "yes"
     showMaybe (Just False) = "no"
-    showMaybe _ = ""
+    showMaybe _ = ""-}
 
 
 data Intervals = From Double | To Double | FromTo (Double, Double) | Single Double
@@ -137,10 +137,8 @@ printListWithNumbers :: [String] -> [String]
 printListWithNumbers xs = zipWith (\n x -> show n ++ ". " ++ x) [1..] xs
 
 
-showTarif :: [Tarif] -> Double -> Int -> String
-showTarif tarif _ 0 = concat $ printListWithNumbers (map (\t -> show t) tarif)
-showTarif tarif bonus 1 = concat $ printListWithNumbers (map (\t -> showTarifWithBonus t bonus) tarif)
-showTarif _ _ _ = ""
+showTarif :: [Tarif] -> String
+showTarif tarif = concat $ printListWithNumbers (map (\t -> show t) tarif)
 
 priceOnly :: Maybe Intervals -> Double -> Double
 priceOnly (Just (Single x)) bonus = x - bonus
