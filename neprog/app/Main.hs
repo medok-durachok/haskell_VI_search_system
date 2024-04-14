@@ -27,8 +27,6 @@ main = do
   bonus <- readFile ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/" "bonus.txt")
   let paths = splitOn ", " input
   putStrLn "" 
-  --mapM_ putStrLn (map ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/") paths)
--- запрашиваем пути файлов через запятую, делаем сплит по ', '
   fileContents <- mapM readAndConcatFileLines (map ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/") paths)
   print (concat fileContents)
   putStrLn "Введите запрос:"
@@ -37,7 +35,7 @@ main = do
   putStrLn $ show (parseUserQuery query)
   putStrLn "Учесть бонусы?"
   bonus_ans <- getLine
-  putStrLn $ (concat (map (searchProducts (parseUserQuery query)) (concat fileContents))) bonus bonus_ans
+  putStrLn $ showTarif (concat (map (searchProducts (parseUserQuery query)) (concat fileContents))) (read bonus) (read bonus_ans)
   --print (if bonus_ans == 0 then concat (map (searchProducts (parseUserQuery query)) (concat fileContents)))
 -- предлагаем пользователю инструкцию к запросу
 -- предлагаем пользователю посмотреть цену через порядковый номер

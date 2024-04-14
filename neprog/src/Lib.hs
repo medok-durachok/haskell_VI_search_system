@@ -40,17 +40,16 @@ instance Show Tarif where
 
 showTarifWithBonus :: Tarif -> Double -> String
 showTarifWithBonus tarif bonus = 
-  "brand:" ++ brandName tarif ++
-  ", price:" ++ showPrice (tarifPrice tarif) bonus ++
-  ", minutes:" ++ showInterval (minutesNumber tarif) ++
-  ", gigabyte:" ++ showInterval (gigabyteNumber tarif) ++
-  ", sms:" ++ show (smsNumber tarif) ++
-  ", transfer:" ++ show (balanceTransfer tarif) ++
-  ", family:" ++ show (familyTarif tarif) ++
-  ", unlimitedSocials:" ++ show (isUnlimitedSocials tarif) ++
-  " }"
+  "brand: " ++ brandName tarif ++
+  ", price: " ++ showPrice (tarifPrice tarif) bonus ++
+  ", minutes: " ++ showInterval (minutesNumber tarif) ++
+  ", gigabyte: " ++ showInterval (gigabyteNumber tarif) ++
+  ", sms: " ++ showInterval (smsNumber tarif) ++
+  ", transfer: " ++ showMaybe (balanceTransfer tarif) ++
+  ", family: " ++ showMaybe (familyTarif tarif) ++
+  ", unlimitedSocials: " ++ showMaybe (isUnlimitedSocials tarif) ++ "\n"
   where
-    showPrice (Just (Single x)) bonus = show bonus
+    showPrice (Just (Single x)) bonus = show (x - bonus)
     showInterval (Just (Single x)) = show x
     showMaybe (Just True) = "yes"
     showMaybe (Just False) = "no"
@@ -117,11 +116,9 @@ parseIntervals str = case words str of
   _ -> Nothing
 
 
-showTarif :: [Tarif] -> Double -> Int -> [String]
-showTarif tarif _ 0 = [show tarif]
-showTarif tarif bonus 1 = map (\t -> showTarifWithBonus t bonus) tarif
---calculatePriceWithBonus :: Double -> Double -> Double
--- цена с учетом баллов
+showTarif :: [Tarif] -> Double -> Int -> String
+showTarif tarif _ 0 = show tarif
+showTarif tarif bonus 1 = concat (map (\t -> showTarifWithBonus t bonus) tarif)
 
 {-
 printQueryInstructions :: IO ()
@@ -129,8 +126,5 @@ printQueryInstructions :: IO ()
 
 askForPriceByIndex :: [Tarif] -> Int -> IO ()
 -- вывести цену интересующего товара
-
-loadBonusPoints :: FilePath -> IO (Either String Double)
--- загрузить файл с бонусами
 
 askToContinue :: IO Bool-}
