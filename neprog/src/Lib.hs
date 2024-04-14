@@ -4,12 +4,11 @@ module Lib
         , parseUserQuery
         , searchProducts
         , showTarif
+        , getPriceByIndex
     ) where     
 
 import Text.Read (readMaybe) 
 import Data.List.Split (splitOn) 
-import Data.List (any)
-import Data.Maybe (isNothing)
 
 data Tarif = Tarif {
     brandName :: String
@@ -23,9 +22,8 @@ data Tarif = Tarif {
 } deriving (Read)
 
 instance Show Tarif where
-  show (Tarif brand price minutes internet sms transfer family socials) =
+  show (Tarif brand _ minutes internet sms transfer family socials) =
     "brand: " ++ show brand ++
-    ", price: " ++ showInterval price ++
     ", minutes: " ++ showInterval minutes ++
     ", gigabyte: " ++ showInterval internet ++
     ", sms: " ++ showInterval sms ++
@@ -34,14 +32,16 @@ instance Show Tarif where
     ", unlimitedSocials: " ++ showMaybe socials ++ "\n"
     where
       showInterval (Just (Single x)) = show x
+      showInterval _ = ""
       showMaybe (Just True) = "yes"
       showMaybe (Just False) = "no"
+      showMaybe _ = ""
 
 
 showTarifWithBonus :: Tarif -> Double -> String
-showTarifWithBonus tarif bonus = 
+showTarifWithBonus tarif _ = 
   "brand: " ++ brandName tarif ++
-  ", price: " ++ showPrice (tarifPrice tarif) bonus ++
+  {-", price: " ++ showPrice (tarifPrice tarif) bonus ++ -}
   ", minutes: " ++ showInterval (minutesNumber tarif) ++
   ", gigabyte: " ++ showInterval (gigabyteNumber tarif) ++
   ", sms: " ++ showInterval (smsNumber tarif) ++
@@ -49,10 +49,12 @@ showTarifWithBonus tarif bonus =
   ", family: " ++ showMaybe (familyTarif tarif) ++
   ", unlimitedSocials: " ++ showMaybe (isUnlimitedSocials tarif) ++ "\n"
   where
-    showPrice (Just (Single x)) bonus = show (x - bonus)
+    {-showPrice (Just (Single x)) bonus = show (x - bonus)-}
     showInterval (Just (Single x)) = show x
+    showInterval _ = ""
     showMaybe (Just True) = "yes"
     showMaybe (Just False) = "no"
+    showMaybe _ = ""
 
 
 data Intervals = From Double | To Double | FromTo (Double, Double) | Single Double
@@ -70,19 +72,32 @@ data Query = Query {
 } deriving (Show, Read)
 
 
-parseTarif :: String -> Tarif
+parseTarif :: String -> Maybe Tarif
 parseTarif str =
   let [brand, price, minutes, internet, sms, transfer, family, socials] = splitOn ", " str
-  in Tarif { brandName = brand, tarifPrice = parseIntervals price , minutesNumber = parseIntervals minutes, gigabyteNumber = parseIntervals internet, smsNumber = parseIntervals sms, 
+  in Just Tarif { brandName = brand, tarifPrice = parseIntervals price , minutesNumber = parseIntervals minutes, gigabyteNumber = parseIntervals internet, smsNumber = parseIntervals sms, 
             balanceTransfer = readMaybe transfer, familyTarif = readMaybe family, isUnlimitedSocials = readMaybe socials}
+parseTarif _ = Nothing
 -- приведение строки к data Tarif
 
 
 parseUserQuery :: String -> Query
 parseUserQuery str =
   let [brand, price, minutes, internet, sms, transfer, family, socials] = splitOn "/" str
-  in Query { queryBrandName = ("brand", brand), queryTarifPrice = ("price", parseIntervals price), queryMinutesNumber = ("minutesNuber", parseIntervals minutes), queryGigabyteNumber = ("Gigabytes", parseIntervals internet), querySmsNumber = ("SMS", parseIntervals sms), 
-            queryBalanceTransfer = ("transfer", readMaybe transfer), queryFamilyTarif = ("family", readMaybe family), queryIsUnlimitedSocials = ("socials", readMaybe socials)}
+  in Query {queryBrandName = ("brand", brand), 
+            queryTarifPrice = ("price", parseIntervals price), 
+            queryMinutesNumber = ("minutesNuber", parseIntervals minutes), 
+            queryGigabyteNumber = ("Gigabytes", parseIntervals internet), 
+            querySmsNumber = ("SMS", parseIntervals sms), 
+            queryBalanceTransfer = ("transfer", if transfer == "yes" then Just True 
+                                                else if transfer == "no" then Just False 
+                                                else Nothing), 
+            queryFamilyTarif = ("family", if family == "yes" then Just True 
+                                                else if family == "no" then Just False 
+                                                else Nothing), 
+            queryIsUnlimitedSocials = ("socials", if socials == "yes" then Just True 
+                                                else if socials == "no" then Just False 
+                                                else Nothing)}
 -- получаем информацию из запроса
 
 compareBoolField :: Eq a => Maybe a -> Maybe a -> Bool
@@ -116,15 +131,22 @@ parseIntervals str = case words str of
   _ -> Nothing
 
 
+printListWithNumbers :: [String] -> [String]
+printListWithNumbers xs = zipWith (\n x -> show n ++ ". " ++ x) [1..] xs
+
+
 showTarif :: [Tarif] -> Double -> Int -> String
-showTarif tarif _ 0 = show tarif
-showTarif tarif bonus 1 = concat (map (\t -> showTarifWithBonus t bonus) tarif)
+showTarif tarif _ 0 = concat $ printListWithNumbers (map (\t -> show t) tarif)
+showTarif tarif bonus 1 = concat $ printListWithNumbers (map (\t -> showTarifWithBonus t bonus) tarif)
+showTarif _ _ _ = ""
 
-{-
-printQueryInstructions :: IO ()
--- инструкция к запросу
+priceOnly :: Maybe Intervals -> Double -> Double
+priceOnly (Just (Single x)) bonus = x - bonus
+priceOnly (Just _) _ = 0
+priceOnly Nothing _ = 0
 
-askForPriceByIndex :: [Tarif] -> Int -> IO ()
--- вывести цену интересующего товара
 
-askToContinue :: IO Bool-}
+getPriceByIndex :: [Tarif] -> Int -> Double -> Int -> Double
+getPriceByIndex lst n _ 0 = priceOnly (tarifPrice (last (take n lst))) 0
+getPriceByIndex lst n bonus 1 = priceOnly (tarifPrice (last (take n lst))) bonus
+getPriceByIndex _ _ _ _ = 0
