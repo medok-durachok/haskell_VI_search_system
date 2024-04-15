@@ -11,12 +11,14 @@ import Data.Maybe (catMaybes)
 import System.Directory (doesFileExist)
 import Data.Char (toLower)
 
+-- checking if user response have right `format`
 checkResponse :: String -> Either String Bool
 checkResponse response
   | map toLower response == "yes" = Right True
   | map toLower response == "no" = Right False
   | otherwise = Left "Invalid response. Please enter 'yes' or 'no'."
 
+-- reading from files + checking if all of them exist
 readAndConcatFileLines :: FilePath -> IO (Either String [Tarif])
 readAndConcatFileLines path = do
   fileExists <- doesFileExist path
@@ -27,6 +29,7 @@ readAndConcatFileLines path = do
       return $ Right $ catMaybes (map parseTarif linesOfFile)
     else return $ Left $ "File '" ++ path ++ "' doesn't exist"
 
+-- suggestion to show price taking bonuses into account or not
 showPrice :: [Tarif] -> Int -> Double -> IO()
 showPrice searchResult index bonus = do
   putStrLn "Do you want to use bonuses? (yes/no)"
@@ -44,6 +47,7 @@ showPrice searchResult index bonus = do
       putStrLn err
       showPrice searchResult index bonus
 
+-- sugesstion to have a look at another price in list
 continueWithPrices :: [Tarif] -> Double -> IO ()
 continueWithPrices searchResult bonus = do
   putStrLn "Continue with prices? (yes/no)"
@@ -55,6 +59,7 @@ continueWithPrices searchResult bonus = do
       putStrLn err
       continueWithPrices searchResult bonus
 
+-- suggestion to enter another index
 repeatIndices :: [Tarif] -> Double -> IO()
 repeatIndices searchResult bonus = do
   putStrLn "Show the price of tarif at index:.. If you don't need price, enter 0"
@@ -64,6 +69,7 @@ repeatIndices searchResult bonus = do
   if index == 0 then putStr ""
   else showPrice searchResult index bonus
 
+-- suggestion to enter another query
 repeatQueries :: [[Tarif]] -> Double -> IO ()
 repeatQueries fileContents bonus = do
   putStrLn "Enter the query:"

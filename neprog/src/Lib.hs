@@ -10,6 +10,7 @@ module Lib
 import Text.Read (readMaybe) 
 import Data.List.Split (splitOn) 
 
+-- data for tarifs read from file
 data Tarif = Tarif {
     brandName :: String
     , tarifName :: String
@@ -58,10 +59,11 @@ showTarifWithBonus tarif _ =
     showMaybe (Just False) = "no"
     showMaybe _ = ""-}
 
-
+-- data for those items which can be specified as beam, interval or just number
 data Intervals = From Double | To Double | FromTo (Double, Double) | Single Double
      deriving (Show, Read, Eq)
 
+-- data for user query
 data Query = Query {
     queryBrandName :: (String, Maybe String)
     , queryTarifPrice :: (String, Maybe Intervals)
@@ -74,14 +76,21 @@ data Query = Query {
 } deriving (Show, Read)
 
 
+-- setting string from file as tarif object 
 parseTarif :: String -> Maybe Tarif
 parseTarif str =
   let [brand, name, price, minutes, internet, sms, transfer, family, socials] = splitOn ", " str
-  in Just Tarif { brandName = brand, tarifName = name, tarifPrice = parseIntervals price , minutesNumber = parseIntervals minutes, gigabyteNumber = parseIntervals internet, smsNumber = parseIntervals sms, 
-            balanceTransfer = readMaybe transfer, familyTarif = readMaybe family, isUnlimitedSocials = readMaybe socials}
--- приведение строки к data Tarif
+  in Just Tarif {brandName = brand, 
+                 tarifName = name, 
+                 tarifPrice = parseIntervals price , 
+                 minutesNumber = parseIntervals minutes, 
+                 gigabyteNumber = parseIntervals internet, 
+                 smsNumber = parseIntervals sms, 
+                 balanceTransfer = readMaybe transfer, 
+                 familyTarif = readMaybe family, 
+                 isUnlimitedSocials = readMaybe socials}
 
-
+-- setting entered user query as Query object
 parseUserQuery :: String -> Query
 parseUserQuery str =
   let [brand, price, minutes, internet, sms, transfer, family, socials] = splitOn "/" str
@@ -99,12 +108,13 @@ parseUserQuery str =
             queryIsUnlimitedSocials = ("socials", if socials == "yes" then Just True 
                                                 else if socials == "no" then Just False 
                                                 else Nothing)}
--- получаем информацию из запроса
 
-compareBoolField :: Eq a => Maybe a -> Maybe a -> Bool
-compareBoolField (Just x) (Just y) = x == y
-compareBoolField _ _ = True
+-- comparison of Maybe type fields in Query and Tarif
+compareMaybeField :: Eq a => Maybe a -> Maybe a -> Bool
+compareMaybeField (Just x) (Just y) = x == y
+compareMaybeField _ _ = True
 
+-- comparison of Intevals type fields
 compareIntervalsField :: Maybe Intervals -> Maybe Intervals -> Bool
 compareIntervalsField (Just (Single x)) (Just (Single y)) = x == y
 compareIntervalsField (Just (Single x)) (Just (From y)) = x >= y
@@ -112,18 +122,20 @@ compareIntervalsField (Just (Single x)) (Just (To y)) = x <= y
 compareIntervalsField (Just (Single x)) (Just (FromTo (y1, y2))) = x <= y2 && x >= y1
 compareIntervalsField _ _ = True
 
+-- searching relevant tarif plans ; can be simplified by change of data Query 
 searchProducts :: Query -> Tarif -> [Tarif]
 searchProducts query tarif =
-  if all id [compareBoolField (Just (brandName tarif)) (snd $ queryBrandName query)
+  if all id [compareMaybeField (Just (brandName tarif)) (snd $ queryBrandName query)
           , compareIntervalsField (tarifPrice tarif) (snd $ queryTarifPrice query)
           , compareIntervalsField (minutesNumber tarif) (snd $ queryMinutesNumber query)
           , compareIntervalsField (gigabyteNumber tarif) (snd $ queryGigabyteNumber query)
           , compareIntervalsField (smsNumber tarif) (snd $ querySmsNumber query)
-          , compareBoolField (balanceTransfer tarif) (snd $ queryBalanceTransfer query)
-          , compareBoolField (familyTarif tarif) (snd $ queryFamilyTarif query)
-          , compareBoolField (isUnlimitedSocials tarif) (snd $ queryIsUnlimitedSocials query)] == True then [tarif]
+          , compareMaybeField (balanceTransfer tarif) (snd $ queryBalanceTransfer query)
+          , compareMaybeField (familyTarif tarif) (snd $ queryFamilyTarif query)
+          , compareMaybeField (isUnlimitedSocials tarif) (snd $ queryIsUnlimitedSocials query)] == True then [tarif]
           else []
 
+-- helps to read Interval fields in user query
 parseIntervals :: String -> Maybe Intervals
 parseIntervals str = case words str of
   ["From", x] -> From <$> readMaybe x
@@ -132,19 +144,20 @@ parseIntervals str = case words str of
   [x] -> Single <$> readMaybe x
   _ -> Nothing
 
-
+-- zipping for better look as the output
 printListWithNumbers :: [String] -> [String]
 printListWithNumbers xs = zipWith (\n x -> show n ++ ". " ++ x) [1..] xs
 
-
+-- show with numbers
 showTarif :: [Tarif] -> String
 showTarif tarif = concat $ printListWithNumbers (map (\t -> show t) tarif)
 
+-- getting only the number for output without any constructors
 priceOnly :: Maybe Intervals -> Double -> Double
 priceOnly (Just (Single x)) bonus = x - bonus
 priceOnly (Just _) _ = 0
 priceOnly Nothing _ = 0
 
-
+-- return tarif on the particular index in list
 getPriceByIndex :: [Tarif] -> Int -> Double -> Double
 getPriceByIndex lst n bonus = priceOnly (tarifPrice (last (take n lst))) bonus
