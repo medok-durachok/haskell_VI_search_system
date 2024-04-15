@@ -1,11 +1,9 @@
-module Lib
-    ( Tarif (..)
-        , parseTarif
-        , parseUserQuery
-        , searchProducts
-        , showTarif
-        , getPriceByIndex
-    ) where     
+module Lib (Tarif (..)
+            , parseTarif
+            , parseUserQuery
+            , searchProducts
+            , showTarif
+            , getPriceByIndex) where     
 
 import Text.Read (readMaybe) 
 import Data.List.Split (splitOn) 
@@ -75,6 +73,8 @@ data Query = Query {
     , queryIsUnlimitedSocials :: (String, Maybe Bool)
 } deriving (Show, Read)
 
+queryArity :: Int
+queryArity = 8
 
 -- setting string from file as tarif object 
 parseTarif :: String -> Maybe Tarif
@@ -91,10 +91,10 @@ parseTarif str =
                  isUnlimitedSocials = readMaybe socials}
 
 -- setting entered user query as Query object
-parseUserQuery :: String -> Query
-parseUserQuery str =
-  let [brand, price, minutes, internet, sms, transfer, family, socials] = splitOn "/" str
-  in Query {queryBrandName = ("brand", readMaybe brand), 
+parseUserQuery :: String -> Either String Query
+parseUserQuery str = if length (splitOn "/" str) < queryArity then Left "wrong query. Try again"
+  else let [brand, price, minutes, internet, sms, transfer, family, socials] = splitOn "/" str
+  in Right Query {queryBrandName = ("brand", readMaybe brand), 
             queryTarifPrice = ("price", parseIntervals price), 
             queryMinutesNumber = ("minutesNuber", parseIntervals minutes), 
             queryGigabyteNumber = ("Gigabytes", parseIntervals internet), 
@@ -146,7 +146,7 @@ parseIntervals str = case words str of
 
 -- zipping for better look as the output
 printListWithNumbers :: [String] -> [String]
-printListWithNumbers xs = zipWith (\n x -> show n ++ ". " ++ x) [1..] xs
+printListWithNumbers xs = zipWith (\ n x -> (show n) ++ ". " ++ x) [1..] xs
 
 -- show with numbers
 showTarif :: [Tarif] -> String

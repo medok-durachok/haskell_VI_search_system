@@ -3,7 +3,12 @@
 
 module Main (main) where
 
-import Lib (Tarif(..), parseTarif, parseUserQuery, searchProducts, showTarif, getPriceByIndex)
+import Lib (Tarif(..)
+            , parseTarif
+            , parseUserQuery
+            , searchProducts
+            , showTarif
+            , getPriceByIndex)
 
 import System.IO ()
 import Data.List.Split (splitOn)  
@@ -74,18 +79,22 @@ repeatQueries :: [[Tarif]] -> Double -> IO ()
 repeatQueries fileContents bonus = do
   putStrLn "Enter the query:"
   query <- getLine
-  putStrLn $ show $ splitOn "/" query
-  let searchResult = concatMap (searchProducts (parseUserQuery query)) (concat fileContents)
-  putStrLn ""
-  putStrLn $ showTarif searchResult
-  
-  repeatIndices searchResult bonus
-  
-  putStrLn "Do you want to enter another query? (yes/no)"
-  continue <- getLine
-  if map toLower continue == "yes"
-    then repeatQueries fileContents bonus
-    else putStrLn ""
+  case (parseUserQuery query) of
+    Left errorMessage -> do 
+      putStrLn $ "Parse error: " ++ errorMessage
+      repeatQueries fileContents bonus
+    Right rightQuery -> do
+      let searchResult = concatMap (searchProducts rightQuery) (concat fileContents)
+      putStrLn ""
+      putStrLn $ showTarif searchResult
+      
+      repeatIndices searchResult bonus
+      
+      putStrLn "Do you want to enter another query? (yes/no)"
+      continue <- getLine
+      if map toLower continue == "yes"
+        then repeatQueries fileContents bonus
+        else putStrLn ""
 
 main :: IO ()
 main = do 
