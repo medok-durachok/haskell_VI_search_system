@@ -3,12 +3,12 @@
 
 module Main (main) where
 
-import Lib (Tarif(..)
+import Lib ( Tarif(..)
             , parseTarif
-            , parseUserQuery
             , searchProducts
             , showTarif
-            , getPriceByIndex)
+            , getPriceByIndex
+            , askQuery)
 
 import System.IO ()
 import Data.List.Split (splitOn)  
@@ -78,23 +78,19 @@ repeatIndices searchResult bonus = do
 repeatQueries :: [[Tarif]] -> Double -> IO ()
 repeatQueries fileContents bonus = do
   putStrLn "Enter the query:"
-  query <- getLine
-  case (parseUserQuery query) of
-    Left errorMessage -> do 
-      putStrLn $ "Parse error: " ++ errorMessage
-      repeatQueries fileContents bonus
-    Right rightQuery -> do
-      let searchResult = concatMap (searchProducts rightQuery) (concat fileContents)
-      putStrLn ""
-      putStrLn $ showTarif searchResult
-      
-      repeatIndices searchResult bonus
-      
-      putStrLn "Do you want to enter another query? (yes/no)"
-      continue <- getLine
-      if map toLower continue == "yes"
-        then repeatQueries fileContents bonus
-        else putStrLn ""
+  rQuery <- askQuery
+  let searchResult = concatMap (searchProducts rQuery) (concat fileContents)
+  putStrLn ""
+  putStrLn $ showTarif searchResult
+  
+  repeatIndices searchResult bonus
+  
+  putStrLn "Do you want to enter another query? (yes/no)" -- добавить проверку
+  continue <- getLine
+  if map toLower continue == "yes"
+    then repeatQueries fileContents bonus
+    else putStrLn ""
+
 
 main :: IO ()
 main = do 
@@ -107,3 +103,6 @@ main = do
     Right tarifs -> do
       repeatQueries tarifs (read bonus)
     Left errorMessage -> putStrLn $ "Access error: " ++ errorMessage
+
+-- brand1.txt, brand2.txt, brand3.txt
+-- /From 200/To 5000//FromTo 10 20000/yes//yes

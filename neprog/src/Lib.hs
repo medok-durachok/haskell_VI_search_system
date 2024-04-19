@@ -1,15 +1,63 @@
 module Lib (Tarif (..)
             , parseTarif
-            , parseUserQuery
             , searchProducts
             , showTarif
-            , getPriceByIndex) where     
+            , getPriceByIndex
+            , askQuery) where     
 
 import Text.Read (readMaybe) 
 import Data.List.Split (splitOn) 
+import Data.Char (toLower)
+
+askQuery :: IO Query
+askQuery = do
+  inputBrandName <- askInput "Brand name"
+  inputTarifPrice <- askInputWithIntervals "Tarif price"
+  inputMinutesNumber <- askInputWithIntervals "Minutes number"
+  inputGigabyteNumber <- askInputWithIntervals "Gigabyte number"
+  inputSmsNumber <- askInputWithIntervals "SMS number"
+  inputBalanceTransfer <- askInputWithBool "Balance transfer"
+  inputFamilyTarif <- askInputWithBool "Family tarif"
+  inputIsUnlimitedSocials <- askInputWithBool "Is unlimited socials"
+  return $ Query inputBrandName inputTarifPrice inputMinutesNumber 
+                 inputGigabyteNumber inputSmsNumber inputBalanceTransfer inputFamilyTarif inputIsUnlimitedSocials
+
+askInput :: String -> IO (String, Maybe String)
+askInput prompt = do
+  putStrLn $ "Enter " ++ prompt ++ ":"
+  input <- getLine
+  if input == "" then return (prompt,Nothing)
+  else return (prompt, Just input)
+
+askInputWithIntervals :: String -> IO (String, Maybe Intervals)
+askInputWithIntervals prompt = do
+  putStrLn $ "Enter " ++ prompt ++ " (single value, from, to, or from-to):"
+  input <- getLine
+  case readMaybe input :: Maybe Double of
+    Just value -> return (prompt, Just $ Single value)
+    Nothing -> case words input of
+      ["from", fromValue] -> case readMaybe fromValue :: Maybe Double of
+        Just value -> return (prompt, Just $ From value)
+        Nothing -> return (prompt, Nothing)
+      ["to", toValue] -> case readMaybe toValue :: Maybe Double of
+        Just value -> return (prompt, Just $ To value)
+        Nothing -> return (prompt, Nothing)
+      ["from-to", fromValue, toValue] -> case (readMaybe fromValue :: Maybe Double, readMaybe toValue :: Maybe Double) of
+        (Just from, Just to) -> return (prompt, Just $ FromTo (from, to))
+        _ -> return (prompt, Nothing)
+      _ -> return (prompt, Nothing)
+
+askInputWithBool :: String -> IO (String, Maybe Bool)
+askInputWithBool prompt = do
+  putStrLn $ "Enter " ++ prompt ++ " (true/false):"
+  input <- getLine
+  case map toLower input of
+    "true" -> return (prompt, Just True)
+    "false" -> return (prompt, Just False)
+    _ -> return (prompt, Nothing)
 
 -- data for tarifs read from file
-data Tarif = Tarif {
+data Tarif = Tarif {  -- either string tarif check
     brandName :: String
     , tarifName :: String
     , tarifPrice :: Maybe Intervals
@@ -39,31 +87,13 @@ instance Show Tarif where
       showMaybe _ = ""
 
 
-{-showTarifWithBonus :: Tarif -> Double -> String
-showTarifWithBonus tarif _ = 
-  "brand: " ++ brandName tarif ++
-  {-", price: " ++ showPrice (tarifPrice tarif) bonus ++ -}
-  ", minutes: " ++ showInterval (minutesNumber tarif) ++
-  ", gigabyte: " ++ showInterval (gigabyteNumber tarif) ++
-  ", sms: " ++ showInterval (smsNumber tarif) ++
-  ", transfer: " ++ showMaybe (balanceTransfer tarif) ++
-  ", family: " ++ showMaybe (familyTarif tarif) ++
-  ", unlimitedSocials: " ++ showMaybe (isUnlimitedSocials tarif) ++ "\n"
-  where
-    {-showPrice (Just (Single x)) bonus = show (x - bonus)-}
-    showInterval (Just (Single x)) = show x
-    showInterval _ = ""
-    showMaybe (Just True) = "yes"
-    showMaybe (Just False) = "no"
-    showMaybe _ = ""-}
-
 -- data for those items which can be specified as beam, interval or just number
 data Intervals = From Double | To Double | FromTo (Double, Double) | Single Double
      deriving (Show, Read, Eq)
 
 -- data for user query
-data Query = Query {
-    queryBrandName :: (String, Maybe String)
+data Query = Query {  
+      queryBrandName :: (String, Maybe String)
     , queryTarifPrice :: (String, Maybe Intervals)
     , queryMinutesNumber :: (String, Maybe Intervals) 
     , queryGigabyteNumber :: (String, Maybe Intervals)
@@ -73,41 +103,39 @@ data Query = Query {
     , queryIsUnlimitedSocials :: (String, Maybe Bool)
 } deriving (Show, Read)
 
-queryArity :: Int
-queryArity = 8
 
--- setting string from file as tarif object 
 parseTarif :: String -> Maybe Tarif
 parseTarif str =
-  let [brand, name, price, minutes, internet, sms, transfer, family, socials] = splitOn ", " str
-  in Just Tarif {brandName = brand, 
-                 tarifName = name, 
-                 tarifPrice = parseIntervals price , 
-                 minutesNumber = parseIntervals minutes, 
-                 gigabyteNumber = parseIntervals internet, 
-                 smsNumber = parseIntervals sms, 
-                 balanceTransfer = readMaybe transfer, 
-                 familyTarif = readMaybe family, 
-                 isUnlimitedSocials = readMaybe socials}
+  case splitOn ", " str of
+    [brand, name, price, minutes, internet, sms, transfer, family, socials] ->
+      case (parseIntervals price, parseIntervals minutes, parseIntervals internet, parseIntervals sms, 
+                readMaybe transfer, readMaybe family, readMaybe socials) of
+        (p, m, i, s, t, f, so) ->
+          Just $ Tarif brand name p m i s t f so
+    _ -> Nothing
+
+
+-- setting string from file as tarif object 
+
 
 -- setting entered user query as Query object
-parseUserQuery :: String -> Either String Query
+{-parseUserQuery :: String -> Either String Query
 parseUserQuery str = if length (splitOn "/" str) < queryArity then Left "wrong query. Try again"
-  else let [brand, price, minutes, internet, sms, transfer, family, socials] = splitOn "/" str
-  in Right Query {queryBrandName = ("brand", readMaybe brand), 
-            queryTarifPrice = ("price", parseIntervals price), 
-            queryMinutesNumber = ("minutesNuber", parseIntervals minutes), 
-            queryGigabyteNumber = ("Gigabytes", parseIntervals internet), 
-            querySmsNumber = ("SMS", parseIntervals sms), 
-            queryBalanceTransfer = ("transfer", if transfer == "yes" then Just True 
+  else case splitOn "/" str of
+    [brand, price, minutes, internet, sms, transfer, family, socials] ->
+      case (readMaybe brand, parseIntervals price, parseIntervals minutes, parseIntervals internet
+              , parseIntervals sms, if transfer == "yes" then Just True 
                                                 else if transfer == "no" then Just False 
-                                                else Nothing), 
-            queryFamilyTarif = ("family", if family == "yes" then Just True 
+                                                else Nothing,
+                            if family == "yes" then Just True 
                                                 else if family == "no" then Just False 
-                                                else Nothing), 
-            queryIsUnlimitedSocials = ("socials", if socials == "yes" then Just True 
+                                                else Nothing, 
+                            if socials == "yes" then Just True 
                                                 else if socials == "no" then Just False 
-                                                else Nothing)}
+                                                else Nothing) of
+        (b, p, m, i, s, t, f, so) ->
+          Right $ Query ("brand", b) ("price", p) ("minutesNuber", m) ("gigabytes", i) ("SMS", s) ("transfer", t) ("family", f) ("socials", so)
+    _ -> Left "rtt"-}
 
 -- comparison of Maybe type fields in Query and Tarif
 compareMaybeField :: Eq a => Maybe a -> Maybe a -> Bool
@@ -132,7 +160,8 @@ searchProducts query tarif =
           , compareIntervalsField (smsNumber tarif) (snd $ querySmsNumber query)
           , compareMaybeField (balanceTransfer tarif) (snd $ queryBalanceTransfer query)
           , compareMaybeField (familyTarif tarif) (snd $ queryFamilyTarif query)
-          , compareMaybeField (isUnlimitedSocials tarif) (snd $ queryIsUnlimitedSocials query)] == True then [tarif]
+          , compareMaybeField (isUnlimitedSocials tarif) (snd $ queryIsUnlimitedSocials query)] == True 
+          then [tarif]
           else []
 
 -- helps to read Interval fields in user query
@@ -146,7 +175,12 @@ parseIntervals str = case words str of
 
 -- zipping for better look as the output
 printListWithNumbers :: [String] -> [String]
-printListWithNumbers xs = zipWith (\ n x -> (show n) ++ ". " ++ x) [1..] xs
+printListWithNumbers xs = zipWith addNumber [1..] xs
+  where
+    addNumber :: Int -> String -> String
+    addNumber n x = show n ++ ". " ++ x
+
+
 
 -- show with numbers
 showTarif :: [Tarif] -> String
