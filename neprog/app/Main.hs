@@ -74,6 +74,19 @@ repeatIndices searchResult bonus = do
   if index == 0 then putStr ""
   else showPrice searchResult index bonus
 
+
+askToRepeatQuery:: [[Tarif]] -> [Tarif] -> Double -> IO ()
+askToRepeatQuery fileContents searchResult bonus = do
+  putStrLn "Do you want to enter another query? (yes/no)"
+  continue <- getLine
+  case checkResponse continue of
+    Right True -> repeatQueries fileContents bonus
+    Right False -> return ()
+    Left err -> do
+      putStrLn err
+      askToRepeatQuery fileContents searchResult bonus
+
+
 -- suggestion to enter another query
 repeatQueries :: [[Tarif]] -> Double -> IO ()
 repeatQueries fileContents bonus = do
@@ -84,13 +97,8 @@ repeatQueries fileContents bonus = do
   putStrLn $ showTarif searchResult
   
   repeatIndices searchResult bonus
+  askToRepeatQuery fileContents searchResult bonus
   
-  putStrLn "Do you want to enter another query? (yes/no)" -- добавить проверку
-  continue <- getLine
-  if map toLower continue == "yes"
-    then repeatQueries fileContents bonus
-    else putStrLn ""
-
 
 main :: IO ()
 main = do 
@@ -102,7 +110,9 @@ main = do
   case sequence fileContents of
     Right tarifs -> do
       repeatQueries tarifs (read bonus)
-    Left errorMessage -> putStrLn $ "Access error: " ++ errorMessage
+    Left errorMessage -> do
+      putStrLn $ "Access error: " ++ errorMessage
+      main
 
 -- brand1.txt, brand2.txt, brand3.txt
 -- /From 200/To 5000//FromTo 10 20000/yes//yes

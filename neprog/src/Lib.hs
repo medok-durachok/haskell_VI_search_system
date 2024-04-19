@@ -49,11 +49,11 @@ askInputWithIntervals prompt = do
 
 askInputWithBool :: String -> IO (String, Maybe Bool)
 askInputWithBool prompt = do
-  putStrLn $ "Enter " ++ prompt ++ " (true/false):"
+  putStrLn $ "Enter " ++ prompt ++ " (yes/no):"
   input <- getLine
   case map toLower input of
-    "true" -> return (prompt, Just True)
-    "false" -> return (prompt, Just False)
+    "yes" -> return (prompt, Just True)
+    "no" -> return (prompt, Just False)
     _ -> return (prompt, Nothing)
 
 -- data for tarifs read from file
