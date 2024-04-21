@@ -175,11 +175,6 @@ parseIntervals str = case words str of
   [x] -> Single <$> readMaybe x
   _ -> Nothing
 
-parseBool :: String -> Maybe Bool
-parseBool "yes" = Just True
-parseBool "no" = Just False
-parseBool _ = Nothing
-
 -- zipping for better look as the output
 printListWithNumbers :: [String] -> [String]
 printListWithNumbers xs = zipWith addNumber [1..] xs
@@ -202,16 +197,31 @@ getPriceByIndex :: [Tarif] -> Int -> Double -> Double
 getPriceByIndex lst n bonus = priceOnly (tarifPrice (last (take n lst))) bonus
 
 --
-changeField :: Query -> String -> Maybe String -> Query
-changeField query label (Just newValue) =
+changeField :: Query -> String -> IO (Query)
+changeField query label =
   case label of
-    "brand" -> query { queryBrandName = ("brand", if newValue == "" then Nothing else Just newValue) }
-    "price" -> query { queryTarifPrice = ("price", parseIntervals newValue) }
-    "minutes" -> query { queryMinutesNumber = ("minutesNuber", parseIntervals newValue) }
-    "internet" -> query { queryGigabyteNumber = ("Gigabytes", parseIntervals newValue) }
-    "sms" -> query { querySmsNumber = ("SMS", parseIntervals newValue) }
-    "transfer" -> query { queryBalanceTransfer = ("transfer", parseBool newValue) }
-    "family" -> query { queryFamilyTarif = ("family", parseBool newValue) }
-    "socials" -> query { queryIsUnlimitedSocials = ("socials", parseBool newValue) }
-    _ -> query
-changeField query _ Nothing = query
+    "brand" -> do 
+      (key, value) <- askInput "brand"
+      return query { queryBrandName = (key, value)}
+    "price" -> do 
+      (key, value) <- askInputWithIntervals "price"
+      return query { queryTarifPrice = (key, value)}
+    "minutes" -> do 
+      (key, value) <- askInputWithIntervals "minutes"
+      return query { queryMinutesNumber = (key, value)}
+    "internet" -> do 
+      (key, value) <- askInputWithIntervals "gigabytes"
+      return query { queryGigabyteNumber = (key, value)}
+    "sms" -> do 
+      (key, value) <- askInputWithIntervals "sms"
+      return query { querySmsNumber = (key, value)}
+    "transfer" -> do 
+      (key, value) <- askInputWithBool "transfer"
+      return query { queryBalanceTransfer= (key, value)}
+    "family" -> do 
+      (key, value) <- askInputWithBool "family"
+      return query { queryFamilyTarif = (key, value)}
+    "socials" -> do 
+      (key, value) <- askInputWithBool "socials"
+      return query { queryIsUnlimitedSocials = (key, value)}
+    _ -> return query

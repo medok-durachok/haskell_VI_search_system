@@ -96,30 +96,33 @@ askToRepeatQuery fileContents searchResult bonus = do
       askToRepeatQuery fileContents searchResult bonus
 
 -- 
-askForChangingFileds :: Query -> IO (Maybe Query)
-askForChangingFileds query = do
+askForChangingFields :: Query -> IO (Maybe Query)
+askForChangingFields query = do
   answer <- getLine
   case checkResponse answer of 
-    Right True -> changingFileds query
+    Right True -> changingFields query
     Right False -> return Nothing
     Left err -> do
       putStrLn err 
-      askForChangingFileds query
+      askForChangingFields query
 
 --
-changingFileds :: Query -> IO (Maybe Query)
-changingFileds query = do
+changingFields :: Query -> IO (Maybe Query)
+changingFields query = do
   putStrLn "Enter the field you want to change (brand, price, minutes, internet, sms, transfer, family, socials):"
   field <- getLine
-  putStrLn "Enter the new value for the field:"
-  newValue <- getLine
-  
-  let updatedQuery = changeField query field (Just newValue)
+  if elem field ["brand", "price", "minutes", "internet", "sms", "transfer", "family", "socials"]
+    then do
+      putStrLn "Enter the new value for the field:"
+      updatedQuery <- changeField query field
+      putStrLn "Do you want to change another field? (yes/no)"
+      continue <- getLine
+      if continue == "yes" then changingFields updatedQuery 
+      else return (Just updatedQuery)
+    else do
+      putStrLn "Invalid field. Please enter a valid field."
+      changingFields query
 
-  putStrLn "Do you want to change another field? (yes/no)"
-  continue <- getLine
-  if continue == "yes" then changingFileds updatedQuery 
-  else return (Just updatedQuery)
 
 -- suggestion to enter another query
 repeatQueries :: [[Tarif]] -> Query -> Double -> IO ()
@@ -130,7 +133,7 @@ repeatQueries fileContents query bonus = do
   putStrLn $ showTarif searchResult
   repeatIndices searchResult bonus
   putStrLn "Do you want to change any fields?"
-  changed <- askForChangingFileds query
+  changed <- askForChangingFields query
   case changed of 
     Just q -> repeatQueries fileContents q bonus
     _ -> askToRepeatQuery fileContents searchResult bonus
