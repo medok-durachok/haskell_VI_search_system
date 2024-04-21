@@ -69,10 +69,11 @@ repeatIndices searchResult bonus = do
       Just index -> do
         putStrLn ""
         if index == 0 then putStr ""
-        else if index > 0 && index <= (length searchResult) then showPrice searchResult index bonus
-        else do 
-          putStrLn "Wrong number. Try again"
-          repeatIndices searchResult bonus
+        else 
+          if index > 0 && index <= (length searchResult) then showPrice searchResult index bonus
+          else do 
+            putStrLn "Wrong number. Try again"
+            repeatIndices searchResult bonus
       Nothing -> do 
         putStrLn "Wrong number. Try again"
         repeatIndices searchResult bonus

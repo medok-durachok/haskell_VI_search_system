@@ -55,7 +55,8 @@ askInputWithIntervals prompt = do
       ["to", toValue] -> case readMaybe toValue :: Maybe Double of
         Just value -> return (prompt, Just $ To value)
         Nothing -> return (prompt, Nothing)
-      ["from-to", fromValue, toValue] -> case (readMaybe fromValue :: Maybe Double, readMaybe toValue :: Maybe Double) of
+      ["from-to", fromValue, toValue] -> 
+        case (readMaybe fromValue :: Maybe Double, readMaybe toValue :: Maybe Double) of
         (Just from, Just to) -> return (prompt, Just $ FromTo (from, to))
         _ -> do 
           putStrLn "Wrong format. Try again"
@@ -127,8 +128,9 @@ parseTarif :: String -> Maybe Tarif
 parseTarif str =
   case splitOn ", " str of
     [brand, name, price, minutes, internet, sms, transfer, family, socials] ->
-      case (parseIntervals price, parseIntervals minutes, parseIntervals internet, parseIntervals sms, 
-                readMaybe transfer, readMaybe family, readMaybe socials) of
+      case (parseIntervals price, parseIntervals minutes, 
+            parseIntervals internet, parseIntervals sms, 
+            readMaybe transfer, readMaybe family, readMaybe socials) of
         (Just p, Just m, Just i, Just s, Just t, Just f, Just so) ->
           Just $ Tarif brand name (Just p) (Just m) (Just i) (Just s) (Just t) (Just f) (Just so)
         _ -> Nothing
@@ -157,7 +159,8 @@ searchProducts query tarif =
           , compareIntervalsField (smsNumber tarif) (snd $ querySmsNumber query)
           , compareMaybeField (balanceTransfer tarif) (snd $ queryBalanceTransfer query)
           , compareMaybeField (familyTarif tarif) (snd $ queryFamilyTarif query)
-          , compareMaybeField (isUnlimitedSocials tarif) (snd $ queryIsUnlimitedSocials query)] == True 
+          , compareMaybeField (isUnlimitedSocials tarif) 
+                              (snd $ queryIsUnlimitedSocials query)] == True 
           then [tarif]
           else []
 
