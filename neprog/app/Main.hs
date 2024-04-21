@@ -78,7 +78,7 @@ repeatIndices searchResult bonus = do
         repeatIndices searchResult bonus
   else putStr ""
 
-
+-- helping function for repeating query
 askToRepeatQuery:: [[Tarif]] -> [Tarif] -> Double -> IO ()
 askToRepeatQuery fileContents searchResult bonus = do
   putStrLn "Do you want to enter another query? (yes/no)"

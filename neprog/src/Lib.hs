@@ -17,6 +17,7 @@ checkResponse response
   | map toLower response == "no" = Right False
   | otherwise = Left "Invalid response. Please enter 'yes' or 'no'."
 
+-- collecting info to make full query
 askQuery :: IO Query
 askQuery = do
   inputBrandName <- askInput "Brand name"
@@ -31,6 +32,7 @@ askQuery = do
                  inputGigabyteNumber inputSmsNumber inputBalanceTransfer 
                  inputFamilyTarif inputIsUnlimitedSocials
 
+-- start func for query
 askInput :: String -> IO (String, Maybe String)
 askInput prompt = do
   putStrLn $ "Enter " ++ prompt ++ ":"
@@ -38,6 +40,7 @@ askInput prompt = do
   if input == "" then return (prompt,Nothing)
   else return (prompt, Just input)
 
+-- parsing user enter for interval fields
 askInputWithIntervals :: String -> IO (String, Maybe Intervals)
 askInputWithIntervals prompt = do
   putStrLn $ "Enter " ++ prompt ++ " (single value, from, to, or from-to):"
@@ -61,6 +64,7 @@ askInputWithIntervals prompt = do
           putStrLn "Wrong format. Try again"
           askInputWithIntervals prompt
 
+-- parsing user enter for boolean fields
 askInputWithBool :: String -> IO (String, Maybe Bool)
 askInputWithBool prompt = do
   putStrLn $ "Enter " ++ prompt ++ " (yes/no):"
@@ -118,6 +122,7 @@ data Query = Query {
     , queryIsUnlimitedSocials :: (String, Maybe Bool)
 } deriving (Show, Read)
 
+-- parsing tarifs from files
 parseTarif :: String -> Maybe Tarif
 parseTarif str =
   case splitOn ", " str of
