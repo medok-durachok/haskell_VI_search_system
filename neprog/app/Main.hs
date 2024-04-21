@@ -109,7 +109,8 @@ askForChangingFields query = do
 --
 changingFields :: Query -> IO (Maybe Query)
 changingFields query = do
-  putStrLn "Enter the field you want to change (brand, price, minutes, internet, sms, transfer, family, socials):"
+  putStrLn "Enter the field you want to change\
+  \(brand, price, minutes, internet, sms, transfer, family, socials):"
   field <- getLine
   if elem field ["brand", "price", "minutes", "internet", "sms", "transfer", "family", "socials"]
     then do
@@ -122,7 +123,6 @@ changingFields query = do
     else do
       putStrLn "Invalid field. Please enter a valid field."
       changingFields query
-
 
 -- suggestion to enter another query
 repeatQueries :: [[Tarif]] -> Query -> Double -> IO ()
@@ -138,6 +138,7 @@ repeatQueries fileContents query bonus = do
     Just q -> repeatQueries fileContents q bonus
     _ -> askToRepeatQuery fileContents searchResult bonus
   
+--
 instruct :: IO ()
 instruct = do
   putStrLn "\nInstruction: \n"
