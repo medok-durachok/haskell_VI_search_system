@@ -1,4 +1,4 @@
-A, Econom, 300, 100, 2, 200, True, False, False
+A, Econom, 300, 100, 2, True, True, False, False
 A, Ultimate, 5000, 5000, 50, 10000, True, True, True
 A, Elite, 4000, 3500, 35, 7000, True, False, True
 A, Premium Lite, 900, 700, 7, 1400, False, False, False

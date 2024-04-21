@@ -3,11 +3,19 @@ module Lib (Tarif (..)
             , searchProducts
             , showTarif
             , getPriceByIndex
-            , askQuery) where     
+            , askQuery
+            , checkResponse) where     
 
 import Text.Read (readMaybe) 
 import Data.List.Split (splitOn) 
 import Data.Char (toLower)
+
+-- checking if user response have right format
+checkResponse :: String -> Either String Bool
+checkResponse response
+  | map toLower response == "yes" = Right True
+  | map toLower response == "no" = Right False
+  | otherwise = Left "Invalid response. Please enter 'yes' or 'no'."
 
 askQuery :: IO Query
 askQuery = do
@@ -20,7 +28,8 @@ askQuery = do
   inputFamilyTarif <- askInputWithBool "Family tarif"
   inputIsUnlimitedSocials <- askInputWithBool "Is unlimited socials"
   return $ Query inputBrandName inputTarifPrice inputMinutesNumber 
-                 inputGigabyteNumber inputSmsNumber inputBalanceTransfer inputFamilyTarif inputIsUnlimitedSocials
+                 inputGigabyteNumber inputSmsNumber inputBalanceTransfer 
+                 inputFamilyTarif inputIsUnlimitedSocials
 
 askInput :: String -> IO (String, Maybe String)
 askInput prompt = do
@@ -33,7 +42,8 @@ askInputWithIntervals :: String -> IO (String, Maybe Intervals)
 askInputWithIntervals prompt = do
   putStrLn $ "Enter " ++ prompt ++ " (single value, from, to, or from-to):"
   input <- getLine
-  case readMaybe input :: Maybe Double of
+  if input == "" then return (prompt, Nothing)
+  else case readMaybe input :: Maybe Double of
     Just value -> return (prompt, Just $ Single value)
     Nothing -> case words input of
       ["from", fromValue] -> case readMaybe fromValue :: Maybe Double of
@@ -44,20 +54,24 @@ askInputWithIntervals prompt = do
         Nothing -> return (prompt, Nothing)
       ["from-to", fromValue, toValue] -> case (readMaybe fromValue :: Maybe Double, readMaybe toValue :: Maybe Double) of
         (Just from, Just to) -> return (prompt, Just $ FromTo (from, to))
-        _ -> return (prompt, Nothing)
-      _ -> return (prompt, Nothing)
+        _ -> do 
+          print "Wrong format. Try again"
+          askInputWithIntervals prompt
+      _ -> do 
+          print "Wrong format. Try again"
+          askInputWithIntervals prompt
 
 askInputWithBool :: String -> IO (String, Maybe Bool)
 askInputWithBool prompt = do
   putStrLn $ "Enter " ++ prompt ++ " (yes/no):"
   input <- getLine
-  case map toLower input of
-    "yes" -> return (prompt, Just True)
-    "no" -> return (prompt, Just False)
-    _ -> return (prompt, Nothing)
+  if input == "" then return (prompt, Nothing)
+  else case checkResponse input of 
+            Right x -> return (prompt, Just x)
+            Left _ -> askInputWithBool prompt 
 
 -- data for tarifs read from file
-data Tarif = Tarif {  -- either string tarif check
+data Tarif = Tarif {  
     brandName :: String
     , tarifName :: String
     , tarifPrice :: Maybe Intervals
@@ -86,7 +100,6 @@ instance Show Tarif where
       showMaybe (Just False) = "no"
       showMaybe _ = ""
 
-
 -- data for those items which can be specified as beam, interval or just number
 data Intervals = From Double | To Double | FromTo (Double, Double) | Single Double
      deriving (Show, Read, Eq)
@@ -103,39 +116,16 @@ data Query = Query {
     , queryIsUnlimitedSocials :: (String, Maybe Bool)
 } deriving (Show, Read)
 
-
 parseTarif :: String -> Maybe Tarif
 parseTarif str =
   case splitOn ", " str of
     [brand, name, price, minutes, internet, sms, transfer, family, socials] ->
       case (parseIntervals price, parseIntervals minutes, parseIntervals internet, parseIntervals sms, 
                 readMaybe transfer, readMaybe family, readMaybe socials) of
-        (p, m, i, s, t, f, so) ->
-          Just $ Tarif brand name p m i s t f so
+        (Just p, Just m, Just i, Just s, Just t, Just f, Just so) ->
+          Just $ Tarif brand name (Just p) (Just m) (Just i) (Just s) (Just t) (Just f) (Just so)
+        _ -> Nothing
     _ -> Nothing
-
-
--- setting string from file as tarif object 
-
-
--- setting entered user query as Query object
-{-parseUserQuery :: String -> Either String Query
-parseUserQuery str = if length (splitOn "/" str) < queryArity then Left "wrong query. Try again"
-  else case splitOn "/" str of
-    [brand, price, minutes, internet, sms, transfer, family, socials] ->
-      case (readMaybe brand, parseIntervals price, parseIntervals minutes, parseIntervals internet
-              , parseIntervals sms, if transfer == "yes" then Just True 
-                                                else if transfer == "no" then Just False 
-                                                else Nothing,
-                            if family == "yes" then Just True 
-                                                else if family == "no" then Just False 
-                                                else Nothing, 
-                            if socials == "yes" then Just True 
-                                                else if socials == "no" then Just False 
-                                                else Nothing) of
-        (b, p, m, i, s, t, f, so) ->
-          Right $ Query ("brand", b) ("price", p) ("minutesNuber", m) ("gigabytes", i) ("SMS", s) ("transfer", t) ("family", f) ("socials", so)
-    _ -> Left "rtt"-}
 
 -- comparison of Maybe type fields in Query and Tarif
 compareMaybeField :: Eq a => Maybe a -> Maybe a -> Bool
@@ -179,8 +169,6 @@ printListWithNumbers xs = zipWith addNumber [1..] xs
   where
     addNumber :: Int -> String -> String
     addNumber n x = show n ++ ". " ++ x
-
-
 
 -- show with numbers
 showTarif :: [Tarif] -> String

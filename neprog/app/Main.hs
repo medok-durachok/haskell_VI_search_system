@@ -8,20 +8,13 @@ import Lib ( Tarif(..)
             , searchProducts
             , showTarif
             , getPriceByIndex
-            , askQuery)
+            , askQuery
+            , checkResponse)
 
 import System.IO ()
 import Data.List.Split (splitOn)  
 import Data.Maybe (catMaybes)
 import System.Directory (doesFileExist)
-import Data.Char (toLower)
-
--- checking if user response have right `format`
-checkResponse :: String -> Either String Bool
-checkResponse response
-  | map toLower response == "yes" = Right True
-  | map toLower response == "no" = Right False
-  | otherwise = Left "Invalid response. Please enter 'yes' or 'no'."
 
 -- reading from files + checking if all of them exist
 readAndConcatFileLines :: FilePath -> IO (Either String [Tarif])
@@ -106,7 +99,8 @@ main = do
   input <- getLine
   bonus <- readFile ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/" "bonus.txt")
   let paths = splitOn ", " input
-  fileContents <- mapM readAndConcatFileLines (map ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/") paths)
+  fileContents <- mapM readAndConcatFileLines 
+                  (map ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/") paths)
   case sequence fileContents of
     Right tarifs -> do
       repeatQueries tarifs (read bonus)
