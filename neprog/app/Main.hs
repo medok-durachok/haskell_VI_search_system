@@ -14,6 +14,7 @@ import Lib ( Tarif(..)
 import System.IO ()
 import Data.List.Split (splitOn)  
 import Data.Maybe (catMaybes)
+import Text.Read (readMaybe)
 import System.Directory (doesFileExist)
 
 -- reading from files + checking if all of them exist
@@ -60,12 +61,22 @@ continueWithPrices searchResult bonus = do
 -- suggestion to enter another index
 repeatIndices :: [Tarif] -> Double -> IO()
 repeatIndices searchResult bonus = do
-  putStrLn "Show the price of tarif at index:.. If you don't need price, enter 0"
-  num <- getLine
-  let index = read num
-  putStrLn ""
-  if index == 0 then putStr ""
-  else showPrice searchResult index bonus
+  if length searchResult > 0 then do
+    putStrLn "Show the price of tarif at index:.. If you don't need price, enter 0"
+    num <- getLine
+    let ind = readMaybe num
+    case ind of 
+      Just index -> do
+        putStrLn ""
+        if index == 0 then putStr ""
+        else if index > 0 && index <= (length searchResult) then showPrice searchResult index bonus
+        else do 
+          putStrLn "Wrong number. Try again"
+          repeatIndices searchResult bonus
+      Nothing -> do 
+        putStrLn "Wrong number. Try again"
+        repeatIndices searchResult bonus
+  else putStr ""
 
 
 askToRepeatQuery:: [[Tarif]] -> [Tarif] -> Double -> IO ()
@@ -86,9 +97,9 @@ repeatQueries fileContents bonus = do
   putStrLn "Enter the query:"
   rQuery <- askQuery
   let searchResult = concatMap (searchProducts rQuery) (concat fileContents)
-  putStrLn ""
+  putStr "\nFind: "
+  print $ length searchResult
   putStrLn $ showTarif searchResult
-  
   repeatIndices searchResult bonus
   askToRepeatQuery fileContents searchResult bonus
   

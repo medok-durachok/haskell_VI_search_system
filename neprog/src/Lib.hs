@@ -55,10 +55,10 @@ askInputWithIntervals prompt = do
       ["from-to", fromValue, toValue] -> case (readMaybe fromValue :: Maybe Double, readMaybe toValue :: Maybe Double) of
         (Just from, Just to) -> return (prompt, Just $ FromTo (from, to))
         _ -> do 
-          print "Wrong format. Try again"
+          putStrLn "Wrong format. Try again"
           askInputWithIntervals prompt
       _ -> do 
-          print "Wrong format. Try again"
+          putStrLn "Wrong format. Try again"
           askInputWithIntervals prompt
 
 askInputWithBool :: String -> IO (String, Maybe Bool)
@@ -68,7 +68,9 @@ askInputWithBool prompt = do
   if input == "" then return (prompt, Nothing)
   else case checkResponse input of 
             Right x -> return (prompt, Just x)
-            Left _ -> askInputWithBool prompt 
+            Left err -> do
+              putStrLn err
+              askInputWithBool prompt 
 
 -- data for tarifs read from file
 data Tarif = Tarif {  
