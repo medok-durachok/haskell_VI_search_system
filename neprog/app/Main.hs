@@ -4,12 +4,14 @@
 module Main (main) where
 
 import Lib ( Tarif(..)
+            , Query(..)
             , parseTarif
             , searchProducts
             , showTarif
             , getPriceByIndex
             , askQuery
-            , checkResponse)
+            , checkResponse
+            , changeField)
 
 import System.IO ()
 import Data.List.Split (splitOn)  
@@ -26,7 +28,7 @@ readAndConcatFileLines path = do
       contents <- readFile path
       let linesOfFile = lines contents
       return $ Right $ catMaybes (map parseTarif linesOfFile)
-    else return $ Left $ "File '" ++ path ++ "' doesn't exist"
+    else return $ Left $ "File '" ++ path ++ "' doesn't exist.\n"
 
 -- suggestion to show price taking bonuses into account or not
 showPrice :: [Tarif] -> Int -> Double -> IO()
@@ -85,25 +87,57 @@ askToRepeatQuery fileContents searchResult bonus = do
   putStrLn "Do you want to enter another query? (yes/no)"
   continue <- getLine
   case checkResponse continue of
-    Right True -> repeatQueries fileContents bonus
+    Right True -> do
+      newQuery <- askQuery
+      repeatQueries fileContents newQuery bonus
     Right False -> return ()
     Left err -> do
       putStrLn err
       askToRepeatQuery fileContents searchResult bonus
 
+-- 
+askForChangingFileds :: Query -> IO (Maybe Query)
+askForChangingFileds query = do
+  answer <- getLine
+  case checkResponse answer of 
+    Right True -> changingFileds query
+    Right False -> return Nothing
+    Left err -> do
+      putStrLn err 
+      askForChangingFileds query
+
+--
+changingFileds :: Query -> IO (Maybe Query)
+changingFileds query = do
+  putStrLn "Enter the field you want to change (brand, price, minutes, internet, sms, transfer, family, socials):"
+  field <- getLine
+  putStrLn "Enter the new value for the field:"
+  newValue <- getLine
+  
+  let updatedQuery = changeField query field (Just newValue)
+
+  putStrLn "Do you want to change another field? (yes/no)"
+  continue <- getLine
+  if continue == "yes" then changingFileds updatedQuery 
+  else return (Just updatedQuery)
 
 -- suggestion to enter another query
-repeatQueries :: [[Tarif]] -> Double -> IO ()
-repeatQueries fileContents bonus = do
-  putStrLn "Enter the query:"
-  rQuery <- askQuery
-  let searchResult = concatMap (searchProducts rQuery) (concat fileContents)
+repeatQueries :: [[Tarif]] -> Query -> Double -> IO ()
+repeatQueries fileContents query bonus = do
+  let searchResult = concatMap (searchProducts query) (concat fileContents)
   putStr "\nFind: "
   print $ length searchResult
   putStrLn $ showTarif searchResult
   repeatIndices searchResult bonus
-  askToRepeatQuery fileContents searchResult bonus
+  putStrLn "Do you want to change any fields?"
+  changed <- askForChangingFileds query
+  case changed of 
+    Just q -> repeatQueries fileContents q bonus
+    _ -> askToRepeatQuery fileContents searchResult bonus
   
+instruct :: IO ()
+instruct = do
+  putStrLn "\nInstruction: \n"
 
 main :: IO ()
 main = do 
@@ -115,7 +149,9 @@ main = do
                   (map ((++) "C:/uni2023-24/haskell_VI_Potapova/neprog/") paths)
   case sequence fileContents of
     Right tarifs -> do
-      repeatQueries tarifs (read bonus)
+      instruct
+      inpQuery <- askQuery
+      repeatQueries tarifs inpQuery (read bonus)
     Left errorMessage -> do
       putStrLn $ "Access error: " ++ errorMessage
       main

@@ -1,10 +1,12 @@
 module Lib (Tarif (..)
+            , Query(..)
             , parseTarif
             , searchProducts
             , showTarif
             , getPriceByIndex
             , askQuery
-            , checkResponse) where     
+            , checkResponse
+            , changeField) where     
 
 import Text.Read (readMaybe) 
 import Data.List.Split (splitOn) 
@@ -173,6 +175,11 @@ parseIntervals str = case words str of
   [x] -> Single <$> readMaybe x
   _ -> Nothing
 
+parseBool :: String -> Maybe Bool
+parseBool "yes" = Just True
+parseBool "no" = Just False
+parseBool _ = Nothing
+
 -- zipping for better look as the output
 printListWithNumbers :: [String] -> [String]
 printListWithNumbers xs = zipWith addNumber [1..] xs
@@ -193,3 +200,18 @@ priceOnly Nothing _ = 0
 -- return tarif on the particular index in list
 getPriceByIndex :: [Tarif] -> Int -> Double -> Double
 getPriceByIndex lst n bonus = priceOnly (tarifPrice (last (take n lst))) bonus
+
+--
+changeField :: Query -> String -> Maybe String -> Query
+changeField query label (Just newValue) =
+  case label of
+    "brand" -> query { queryBrandName = ("brand", if newValue == "" then Nothing else Just newValue) }
+    "price" -> query { queryTarifPrice = ("price", parseIntervals newValue) }
+    "minutes" -> query { queryMinutesNumber = ("minutesNuber", parseIntervals newValue) }
+    "internet" -> query { queryGigabyteNumber = ("Gigabytes", parseIntervals newValue) }
+    "sms" -> query { querySmsNumber = ("SMS", parseIntervals newValue) }
+    "transfer" -> query { queryBalanceTransfer = ("transfer", parseBool newValue) }
+    "family" -> query { queryFamilyTarif = ("family", parseBool newValue) }
+    "socials" -> query { queryIsUnlimitedSocials = ("socials", parseBool newValue) }
+    _ -> query
+changeField query _ Nothing = query
