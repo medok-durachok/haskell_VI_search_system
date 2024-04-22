@@ -73,11 +73,16 @@ askInput prompt = do
 -- parsing user enter for interval fields
 askInputWithIntervals :: String -> IO (String, Maybe Intervals)
 askInputWithIntervals prompt = do
-  putStrLn $ "Enter " ++ prompt ++ " (single value, From, To, or FromTo):"
+  putStrLn $ "Enter " ++ prompt ++ " (single value, From, To, or FromTo)."
+  putStrLn $ "Example: 12; From 12; To 12, FromTo 11 12"
   input <- getLine
   if input == "" then return (prompt, Nothing)
   else case readMaybe input :: Maybe Double of
-    Just value -> return (prompt, Just $ Single value)
+    Just value -> case parseIntervals input of
+        Nothing -> do 
+          putStrLn "Wrong format. Try again"
+          askInputWithIntervals prompt
+        _ -> do return (prompt, Just $ Single value)
     Nothing -> case parseIntervals input of
         Nothing -> do 
           putStrLn "Wrong format. Try again"
@@ -145,28 +150,28 @@ changeField query label =
   case label of
     "brand" -> do 
       (key, value) <- askInput "Brand name"
-      return query { queryBrandName = (key, value)}
+      return query { queryBrandName = (key, value) }
     "price" -> do 
       (key, value) <- askInputWithIntervals "Tarif price"
-      return query { queryTarifPrice = (key, value)}
+      return query { queryTarifPrice = (key, value) }
     "minutes" -> do 
       (key, value) <- askInputWithIntervals "Minutes number"
-      return query { queryMinutesNumber = (key, value)}
+      return query { queryMinutesNumber = (key, value) }
     "internet" -> do 
       (key, value) <- askInputWithIntervals "Gigabyte number"
-      return query { queryGigabyteNumber = (key, value)}
+      return query { queryGigabyteNumber = (key, value) }
     "sms" -> do 
       (key, value) <- askInputWithIntervals "SMS number"
-      return query { querySmsNumber = (key, value)}
+      return query { querySmsNumber = (key, value) }
     "transfer" -> do 
       (key, value) <- askInputWithBool "Balance transfer"
-      return query { queryBalanceTransfer= (key, value)}
+      return query { queryBalanceTransfer= (key, value) }
     "family" -> do 
       (key, value) <- askInputWithBool "Family tarif"
-      return query { queryFamilyTarif = (key, value)}
+      return query { queryFamilyTarif = (key, value) }
     "socials" -> do 
       (key, value) <- askInputWithBool "Is unlimited socials"
-      return query { queryIsUnlimitedSocials = (key, value)}
+      return query { queryIsUnlimitedSocials = (key, value) }
     _ -> return query
 
 -- helping function for repeating query
@@ -184,7 +189,7 @@ askToRepeatQuery fileContents searchResult bonus = do
       askToRepeatQuery fileContents searchResult bonus
 
 -- suggestion to enter another index
-repeatIndices :: [Tarif] -> Double -> IO()
+repeatIndices :: [Tarif] -> Double -> IO ()
 repeatIndices searchResult bonus = do
   if length searchResult > 0 then do
     putStrLn "Show the price of tarif at index:.. If you don't need price, enter 0"

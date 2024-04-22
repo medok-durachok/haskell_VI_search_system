@@ -61,13 +61,34 @@ searchProducts query tarif =
           then [tarif]
           else []
 
+isValidNumber :: String -> Bool
+isValidNumber x = case (readMaybe x :: Maybe Double) of
+  Just num -> num >= 0
+  Nothing -> False
+
+isValidFromTo :: String -> String -> Bool
+isValidFromTo x y = case (readMaybe x :: Maybe Double) of
+  Just num_x -> case (readMaybe y :: Maybe Double) of
+    Just num_y -> num_y >= num_x
+    Nothing -> False
+  Nothing -> False
+
 -- helps to read Interval fields in user query
 parseIntervals :: String -> Maybe Intervals
 parseIntervals str = case words (map toLower str) of
-  ["from", x] -> From <$> readMaybe x
-  ["to", x] -> To <$> readMaybe x
-  ["fromto", x, y] -> FromTo <$> ((,) <$> readMaybe x <*> readMaybe y)
-  [x] -> Single <$> readMaybe x
+  [x] 
+    | isValidNumber x -> Single <$> readMaybe x
+    | otherwise -> Nothing
+  ["from", x]
+    | isValidNumber x -> From <$> readMaybe x
+    | otherwise -> Nothing
+  ["to", x]
+    | isValidNumber x -> To <$> readMaybe x
+    | otherwise -> Nothing
+  ["fromto", x, y] 
+    | isValidNumber x && isValidFromTo x y -> 
+      FromTo <$> ((,) <$> readMaybe x <*> readMaybe y)
+    | otherwise -> Nothing
   _ -> Nothing
 
 -- zipping for better look as the output
