@@ -29,4 +29,3 @@ main = do
       main
 
 -- brand1.txt, brand2.txt, brand3.txt
--- /From 200/To 5000//FromTo 10 20000/yes//yes
