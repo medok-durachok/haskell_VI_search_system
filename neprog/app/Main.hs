@@ -95,7 +95,7 @@ askToRepeatQuery fileContents searchResult bonus = do
       putStrLn err
       askToRepeatQuery fileContents searchResult bonus
 
--- 
+-- ask if user wants to change anything
 askForChangingFields :: Query -> IO (Maybe Query)
 askForChangingFields query = do
   answer <- getLine
@@ -106,7 +106,7 @@ askForChangingFields query = do
       putStrLn err 
       askForChangingFields query
 
---
+-- asking about particular field to change
 changingFields :: Query -> IO (Maybe Query)
 changingFields query = do
   putStrLn "Enter the field you want to change\
@@ -138,10 +138,22 @@ repeatQueries fileContents query bonus = do
     Just q -> repeatQueries fileContents q bonus
     _ -> askToRepeatQuery fileContents searchResult bonus
   
---
+-- instruction for user about query inputing
 instruct :: IO ()
 instruct = do
-  putStrLn "\nInstruction: \n"
+  putStrLn "\nInstruction:"
+  putStrLn "Welcome to Tariff Search!"
+  putStrLn "Please provide the following information for your query:"
+  putStrLn "Brand Name: Enter the brand name of the tariff."
+  putStrLn "Tarif Price: Enter the price range or single value of the tariff."
+  putStrLn "Minutes Number: Enter the range or single value of included minutes."
+  putStrLn "Gigabyte Number: Enter the range or single value of included gigabytes."
+  putStrLn "SMS Number: Enter the range or single value of included SMS."
+  putStrLn "Balance Transfer: Enter 'yes' if the tariff includes balance transfer, 'no' if not."
+  putStrLn "Family Tarif: Enter 'yes' if the tariff includes family options, 'no' if not."
+  putStrLn "Is Unlimited Socials: Enter 'yes' if the tariff includes unlimited social media, 'no' if not."
+  putStrLn "Leave fields blank if not applicable. \n"
+
 
 main :: IO ()
 main = do 

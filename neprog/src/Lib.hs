@@ -185,7 +185,7 @@ priceOnly Nothing _ = 0
 getPriceByIndex :: [Tarif] -> Int -> Double -> Double
 getPriceByIndex lst n bonus = priceOnly (tarifPrice (last (take n lst))) bonus
 
---
+-- change value by key in Query
 changeField :: Query -> String -> IO (Query)
 changeField query label =
   case label of
