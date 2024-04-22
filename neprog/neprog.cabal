@@ -25,6 +25,7 @@ source-repository head
 
 library
   exposed-modules:
+      InOut
       Lib
       Types
   other-modules:

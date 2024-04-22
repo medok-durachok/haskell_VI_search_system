@@ -2,14 +2,13 @@ module Lib (parseTarif
             , searchProducts
             , showTarif
             , getPriceByIndex
-            , askQuery
             , checkResponse
-            , changeField) where
+            , parseIntervals) where
 
 import Types ( Tarif(..)
               , Query(..)
               , Intervals(..))
-              
+
 import Text.Read (readMaybe) 
 import Data.List.Split (splitOn) 
 import Data.Char (toLower)
@@ -20,55 +19,6 @@ checkResponse response
   | map toLower response == "yes" = Right True
   | map toLower response == "no" = Right False
   | otherwise = Left "Invalid response. Please enter 'yes' or 'no'."
-
--- collecting info to make full query
-askQuery :: IO Query
-askQuery = do
-  inputBrandName <- askInput "Brand name"
-  inputTarifPrice <- askInputWithIntervals "Tarif price"
-  inputMinutesNumber <- askInputWithIntervals "Minutes number"
-  inputGigabyteNumber <- askInputWithIntervals "Gigabyte number"
-  inputSmsNumber <- askInputWithIntervals "SMS number"
-  inputBalanceTransfer <- askInputWithBool "Balance transfer"
-  inputFamilyTarif <- askInputWithBool "Family tarif"
-  inputIsUnlimitedSocials <- askInputWithBool "Is unlimited socials"
-  return $ Query inputBrandName inputTarifPrice inputMinutesNumber 
-                 inputGigabyteNumber inputSmsNumber inputBalanceTransfer 
-                 inputFamilyTarif inputIsUnlimitedSocials
-
--- start func for query
-askInput :: String -> IO (String, Maybe String)
-askInput prompt = do
-  putStrLn $ "Enter " ++ prompt ++ ":"
-  input <- getLine
-  if input == "" then return (prompt,Nothing)
-  else return (prompt, Just input)
-
--- parsing user enter for interval fields
-askInputWithIntervals :: String -> IO (String, Maybe Intervals)
-askInputWithIntervals prompt = do
-  putStrLn $ "Enter " ++ prompt ++ " (single value, From, To, or FromTo):"
-  input <- getLine
-  if input == "" then return (prompt, Nothing)
-  else case readMaybe input :: Maybe Double of
-    Just value -> return (prompt, Just $ Single value)
-    Nothing -> case parseIntervals input of
-        Nothing -> do 
-          putStrLn "Wrong format. Try again"
-          askInputWithIntervals prompt
-        _ -> do return (prompt, parseIntervals input)
-
--- parsing user enter for boolean fields
-askInputWithBool :: String -> IO (String, Maybe Bool)
-askInputWithBool prompt = do
-  putStrLn $ "Enter " ++ prompt ++ " (yes/no):"
-  input <- getLine
-  if input == "" then return (prompt, Nothing)
-  else case checkResponse input of 
-            Right x -> return (prompt, Just x)
-            Left err -> do
-              putStrLn err
-              askInputWithBool prompt 
 
 -- parsing tarifs from files
 parseTarif :: String -> Maybe Tarif
@@ -140,33 +90,3 @@ priceOnly Nothing _ = 0
 -- return tarif on the particular index in list
 getPriceByIndex :: [Tarif] -> Int -> Double -> Double
 getPriceByIndex lst n bonus = priceOnly (tarifPrice (last (take n lst))) bonus
-
--- change value by key in Query
-changeField :: Query -> String -> IO (Query)
-changeField query label =
-  case label of
-    "brand" -> do 
-      (key, value) <- askInput "Brand name"
-      return query { queryBrandName = (key, value)}
-    "price" -> do 
-      (key, value) <- askInputWithIntervals "Tarif price"
-      return query { queryTarifPrice = (key, value)}
-    "minutes" -> do 
-      (key, value) <- askInputWithIntervals "Minutes number"
-      return query { queryMinutesNumber = (key, value)}
-    "internet" -> do 
-      (key, value) <- askInputWithIntervals "Gigabyte number"
-      return query { queryGigabyteNumber = (key, value)}
-    "sms" -> do 
-      (key, value) <- askInputWithIntervals "SMS number"
-      return query { querySmsNumber = (key, value)}
-    "transfer" -> do 
-      (key, value) <- askInputWithBool "Balance transfer"
-      return query { queryBalanceTransfer= (key, value)}
-    "family" -> do 
-      (key, value) <- askInputWithBool "Family tarif"
-      return query { queryFamilyTarif = (key, value)}
-    "socials" -> do 
-      (key, value) <- askInputWithBool "Is unlimited socials"
-      return query { queryIsUnlimitedSocials = (key, value)}
-    _ -> return query
