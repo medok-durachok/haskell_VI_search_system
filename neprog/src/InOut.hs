@@ -16,9 +16,10 @@ import Types ( Tarif(..)
               , Intervals(..))
     
 import System.IO () 
-import Data.Maybe (catMaybes)
 import Text.Read (readMaybe)
 import System.Directory (doesFileExist)
+import Data.Either (rights ,lefts)
+import Data.List (intercalate)
 
 -- reading from files + checking if all of them exist
 readAndConcatFileLines :: FilePath -> IO (Either String [Tarif])
@@ -28,13 +29,15 @@ readAndConcatFileLines path = do
     then do
       contents <- readFile path
       let linesOfFile = lines contents
-      return $ Right $ catMaybes (map parseTarif linesOfFile)
+      putStrLn ""
+      putStr $ intercalate "\n" $ lefts (map (\l -> parseTarif l path) linesOfFile)
+      return $ Right $ rights (map (\l -> parseTarif l path) linesOfFile)
     else return $ Left $ "File '" ++ path ++ "' doesn't exist.\n"
 
 -- instruction for user about query inputing
 instruct :: IO ()
 instruct = do
-  putStrLn "\nInstruction:"
+  putStrLn "\n\nInstruction:"
   putStrLn "Welcome to Tariff Search!"
   putStrLn "Please provide the following information for your query:"
   putStrLn "Brand Name: Enter the brand name of the tariff."

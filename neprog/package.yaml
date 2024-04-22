@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.6 && < 5
 - split
 - directory
+- filepath
 ghc-options:
 - -Wall
 - -Werror

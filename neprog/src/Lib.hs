@@ -12,6 +12,7 @@ import Types ( Tarif(..)
 import Text.Read (readMaybe) 
 import Data.List.Split (splitOn) 
 import Data.Char (toLower)
+import System.FilePath
 
 -- checking if user response have right format
 checkResponse :: String -> Either String Bool
@@ -21,17 +22,17 @@ checkResponse response
   | otherwise = Left "Invalid response. Please enter 'yes' or 'no'."
 
 -- parsing tarifs from files
-parseTarif :: String -> Maybe Tarif
-parseTarif str =
+parseTarif :: String -> FilePath -> Either String Tarif
+parseTarif str file =
   case splitOn ", " str of
     [brand, name, price, minutes, internet, sms, transfer, family, socials] ->
       case (parseIntervals price, parseIntervals minutes, 
             parseIntervals internet, parseIntervals sms, 
             readMaybe transfer, readMaybe family, readMaybe socials) of
         (Just p, Just m, Just i, Just s, Just t, Just f, Just so) ->
-          Just $ Tarif brand name (Just p) (Just m) (Just i) (Just s) (Just t) (Just f) (Just so)
-        _ -> Nothing
-    _ -> Nothing
+          Right $ Tarif brand name (Just p) (Just m) (Just i) (Just s) (Just t) (Just f) (Just so)
+        _ -> Left ("Wrong format in " ++ last (splitOn "/" (takeFileName file)) ++ ": " ++ str)
+    _ -> Left ("Wrong format in" ++ last (splitOn "/" (takeFileName file)) ++ ": " ++ str)
 
 -- comparison of Maybe Bool fields in Query and Tarif
 compareMaybeBoolField :: Eq a => Maybe a -> Maybe a -> Bool

@@ -5,6 +5,6 @@ B, Premium Plus, 1500, 1500, 15, 3000, True, True, False
 B, Family, 1200, 2000, 20, 4000, False, True, True
 B, Unlimited, 2000, 3000, 30, 6000, True, True, True
 B, Student, 400, 300, 3, 500, True, False, True
-B, Business, 3000, 2500, 25, 5000, True, True, True
+B, Business, rr, 2500, 25, 5000, True, True, True
 B, International, 2500, 2000, 20, 4000, True, False, False
 B, Economy, 300, 200, 2, 400, False, False, True
