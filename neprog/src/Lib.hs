@@ -33,10 +33,15 @@ parseTarif str =
         _ -> Nothing
     _ -> Nothing
 
--- comparison of Maybe type fields in Query and Tarif
-compareMaybeField :: Eq a => Maybe a -> Maybe a -> Bool
-compareMaybeField (Just x) (Just y) = x == y
-compareMaybeField _ _ = True
+-- comparison of Maybe Bool fields in Query and Tarif
+compareMaybeBoolField :: Eq a => Maybe a -> Maybe a -> Bool
+compareMaybeBoolField (Just x) (Just y) = x == y
+compareMaybeBoolField _ _ = True
+
+-- comparison of Maybe String fields in Query and Tarif
+compareMaybeStringField :: Maybe String -> Maybe String -> Bool
+compareMaybeStringField (Just x) (Just y) = map toLower x == map toLower y
+compareMaybeStringField _ _ = True
 
 -- comparison of Intevals type fields
 compareIntervalsField :: Maybe Intervals -> Maybe Intervals -> Bool
@@ -49,14 +54,15 @@ compareIntervalsField _ _ = True
 -- searching relevant tarif plans ; can be simplified by change of data Query 
 searchProducts :: Query -> Tarif -> [Tarif]
 searchProducts query tarif =
-  if all id [compareMaybeField (Just (brandName tarif)) (snd $ queryBrandName query)
+  if all id [compareMaybeStringField (Just (brandName tarif)) (snd $ queryBrandName query)
+          , compareMaybeStringField (Just (tarifName tarif)) (snd $ queryTarifName query)
           , compareIntervalsField (tarifPrice tarif) (snd $ queryTarifPrice query)
           , compareIntervalsField (minutesNumber tarif) (snd $ queryMinutesNumber query)
           , compareIntervalsField (gigabyteNumber tarif) (snd $ queryGigabyteNumber query)
           , compareIntervalsField (smsNumber tarif) (snd $ querySmsNumber query)
-          , compareMaybeField (balanceTransfer tarif) (snd $ queryBalanceTransfer query)
-          , compareMaybeField (familyTarif tarif) (snd $ queryFamilyTarif query)
-          , compareMaybeField (isUnlimitedSocials tarif) 
+          , compareMaybeBoolField (balanceTransfer tarif) (snd $ queryBalanceTransfer query)
+          , compareMaybeBoolField (familyTarif tarif) (snd $ queryFamilyTarif query)
+          , compareMaybeBoolField (isUnlimitedSocials tarif) 
                               (snd $ queryIsUnlimitedSocials query)] == True 
           then [tarif]
           else []

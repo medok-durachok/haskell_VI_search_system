@@ -39,6 +39,7 @@ data Intervals = From Double | To Double | FromTo (Double, Double) | Single Doub
 -- data for user query
 data Query = Query {  
       queryBrandName :: (String, Maybe String)
+    , queryTarifName :: (String, Maybe String)
     , queryTarifPrice :: (String, Maybe Intervals)
     , queryMinutesNumber :: (String, Maybe Intervals) 
     , queryGigabyteNumber :: (String, Maybe Intervals)

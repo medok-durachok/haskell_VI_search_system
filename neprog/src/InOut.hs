@@ -44,13 +44,15 @@ instruct = do
   putStrLn "SMS Number: Enter the range or single value of included SMS."
   putStrLn "Balance Transfer: Enter 'yes' if the tariff includes balance transfer, 'no' if not."
   putStrLn "Family Tarif: Enter 'yes' if the tariff includes family options, 'no' if not."
-  putStrLn "Is Unlimited Socials: Enter 'yes' if the tariff includes unlimited social media, 'no' if not."
+  putStrLn "Is Unlimited Socials:\ 
+  \ Enter 'yes' if the tariff includes unlimited social media, 'no' if not."
   putStrLn "Leave fields blank if not applicable. \n"
 
 -- collecting info to make full query
 askQuery :: IO Query
 askQuery = do
   inputBrandName <- askInput "Brand name"
+  inputTarifName <- askInput "Tarif name"
   inputTarifPrice <- askInputWithIntervals "Tarif price"
   inputMinutesNumber <- askInputWithIntervals "Minutes number"
   inputGigabyteNumber <- askInputWithIntervals "Gigabyte number"
@@ -58,7 +60,7 @@ askQuery = do
   inputBalanceTransfer <- askInputWithBool "Balance transfer"
   inputFamilyTarif <- askInputWithBool "Family tarif"
   inputIsUnlimitedSocials <- askInputWithBool "Is unlimited socials"
-  return $ Query inputBrandName inputTarifPrice inputMinutesNumber 
+  return $ Query inputBrandName inputTarifName inputTarifPrice inputMinutesNumber 
                  inputGigabyteNumber inputSmsNumber inputBalanceTransfer 
                  inputFamilyTarif inputIsUnlimitedSocials
 
@@ -119,9 +121,10 @@ repeatQueries fileContents query bonus = do
 changingFields :: Query -> IO (Maybe Query)
 changingFields query = do
   putStrLn "Enter the field you want to change\
-  \(brand, price, minutes, internet, sms, transfer, family, socials):"
+  \(brand, name, price, minutes, internet, sms, transfer, family, socials):"
   field <- getLine
-  if elem field ["brand", "price", "minutes", "internet", "sms", "transfer", "family", "socials"]
+  if elem field 
+    ["brand", "name", "price", "minutes", "internet", "sms", "transfer", "family", "socials"]
     then do
       putStrLn "Enter the new value for the field:"
       updatedQuery <- changeField query field
@@ -151,6 +154,9 @@ changeField query label =
     "brand" -> do 
       (key, value) <- askInput "Brand name"
       return query { queryBrandName = (key, value) }
+    "name" -> do 
+      (key, value) <- askInput "Tarif name"
+      return query { queryTarifName = (key, value) }
     "price" -> do 
       (key, value) <- askInputWithIntervals "Tarif price"
       return query { queryTarifPrice = (key, value) }
