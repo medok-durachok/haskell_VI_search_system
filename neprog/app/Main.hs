@@ -3,9 +3,7 @@
 
 module Main (main) where
 
-import Lib ( Tarif(..)
-            , Query(..)
-            , parseTarif
+import Lib (  parseTarif
             , searchProducts
             , showTarif
             , getPriceByIndex
@@ -13,6 +11,9 @@ import Lib ( Tarif(..)
             , checkResponse
             , changeField)
 
+import Types ( Tarif(..)
+              , Query(..))
+              
 import System.IO ()
 import Data.List.Split (splitOn)  
 import Data.Maybe (catMaybes)
