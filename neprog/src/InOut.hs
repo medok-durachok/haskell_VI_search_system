@@ -18,7 +18,7 @@ import Types ( Tarif(..)
 import System.IO () 
 import Text.Read (readMaybe)
 import System.Directory (doesFileExist)
-import Data.Either (rights ,lefts)
+import Data.Either (rights, lefts)
 import Data.List (intercalate)
 
 -- reading from files + checking if all of them exist
@@ -38,18 +38,18 @@ readAndConcatFileLines path = do
 instruct :: IO ()
 instruct = do
   putStrLn "\n\nInstruction:"
-  putStrLn "Welcome to Tariff Search!"
+  putStrLn "Welcome to Tarif Search!"
   putStrLn "Please provide the following information for your query:"
-  putStrLn "Brand Name: Enter the brand name of the tariff."
-  putStrLn "Tarif Price: Enter the price range or single value of the tariff."
+  putStrLn "Brand Name: Enter the brand name of the tarif."
+  putStrLn "Tarif Price: Enter the price range or single value of the tarif."
   putStrLn "Minutes Number: Enter the range or single value of included minutes."
   putStrLn "Gigabyte Number: Enter the range or single value of included gigabytes."
   putStrLn "SMS Number: Enter the range or single value of included SMS."
-  putStrLn "Balance Transfer: Enter 'yes' if the tariff includes balance transfer, 'no' if not."
+  putStrLn "Balance Transfer: Enter 'yes' if the tarif includes balance transfer, 'no' if not."
   putStrLn "Family Tarif: Enter 'yes' if the tariff includes family options, 'no' if not."
   putStrLn "Is Unlimited Socials:\ 
-  \ Enter 'yes' if the tariff includes unlimited social media, 'no' if not."
-  putStrLn "Leave fields blank if not applicable. \n"
+  \ Enter 'yes' if the tarif includes unlimited social media, 'no' if not."
+  putStrLn "Leave fields blank if not needed. \n"
 
 -- collecting info to make full query
 askQuery :: IO Query
